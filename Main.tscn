@@ -1,0 +1,85 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://SketchBoard.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Network.tscn" type="PackedScene" id=2]
+[ext_resource path="res://Buttons.gd" type="Script" id=3]
+
+[sub_resource type="GDScript" id=1]
+script/source = "extends Button
+
+
+# Declare member variables here. Examples:
+# var a = 2
+# var b = \"text\"
+
+
+# Called when the node enters the scene tree for the first time.
+func _ready():
+	pass # Replace with function body.
+
+
+# Called every frame. 'delta' is the elapsed time since the previous frame.
+#func _process(delta):
+#	pass
+"
+
+[sub_resource type="GDScript" id=2]
+script/source = "extends Button
+
+
+
+func _on_Training_toggled(button_pressed):
+	pass # Replace with function body.
+"
+
+[node name="Main" type="Node"]
+
+[node name="SketchBoard" parent="." instance=ExtResource( 1 )]
+margin_left = 103.0
+margin_top = 164.0
+margin_right = 103.0
+margin_bottom = 164.0
+
+[node name="Network" parent="." instance=ExtResource( 2 )]
+pixel_grid = NodePath("../SketchBoard")
+submit = NodePath("../Buttons/Submit")
+
+[node name="Buttons" type="Node" parent="."]
+script = ExtResource( 3 )
+
+[node name="Submit" type="Button" parent="Buttons"]
+margin_left = 232.0
+margin_top = 511.0
+margin_right = 289.0
+margin_bottom = 531.0
+text = "Submit"
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Erase" type="Button" parent="Buttons"]
+margin_left = 408.0
+margin_top = 509.0
+margin_right = 465.0
+margin_bottom = 529.0
+text = "Erase"
+script = SubResource( 1 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="Training" type="Button" parent="Buttons"]
+margin_left = 153.0
+margin_top = 511.0
+margin_right = 210.0
+margin_bottom = 531.0
+toggle_mode = true
+text = "Train"
+script = SubResource( 2 )
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[connection signal="pressed" from="Buttons/Submit" to="Network" method="_on_Submit_pressed"]
+[connection signal="pressed" from="Buttons/Erase" to="SketchBoard" method="_on_Erase_pressed"]
+[connection signal="toggled" from="Buttons/Training" to="Buttons" method="_on_Training_toggled"]
