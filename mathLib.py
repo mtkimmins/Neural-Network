@@ -623,15 +623,3 @@ class Matrix:
                     output += ','
             output += ']\n'
         print(output)
-
-
-e = [1,1,1,1]
-a = Matrix(2,3)
-b = Matrix(2,3)
-a.add(2)
-b.add(3)
-c = Matrix.get_row_percentage(a)
-c.add(2)
-
-a.print()
-c.print()
