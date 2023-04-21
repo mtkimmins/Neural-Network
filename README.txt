@@ -92,3 +92,17 @@ FROM BACKPROP:
         #get error by subtract the output we got from the target vec
         #multiply the last error vec with the next weight matrix, but transposed = new error vec
         #append to holder
+
+FROM MATHLAB MATRIX MULTIPLICATION:
+#do matrix multiplication
+                for row in range(new_rows):
+                    new_row = []
+                    for col in range(new_columns):
+                        #each cell of new matrix will be the sum-product of row-col associations.
+                        #each sum-product will have N terms; N = common dimension
+                        #(row of first * col of second) with reciprocal dimension + by N
+                        sum_prod = 0
+                        for j in range(comp_numb):
+                            sum_prod += (c_matrix.matrix[row][j] * c_input.matrix[j][col])
+                        new_row.append(sum_prod)
+                    new_matrix.append(new_row)
