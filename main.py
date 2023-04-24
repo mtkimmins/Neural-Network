@@ -17,15 +17,14 @@ answers = [
     [1]
 ]
 
-print("INITIAL")
+# print("INITIAL")
+# # net.print()
+# net.feedforward(inputs[1])
+# print("AFTER FEEDFORWARD")
+# # net.print()
+# net.backpropagate(answers[1])
+# print("AFTER BACKPROP")
 # net.print()
-net.feedforward(inputs[1])
-print("AFTER FEEDFORWARD")
-# net.print()
-net.backpropagate(answers[1])
-print("AFTER BACKPROP")
-net.print()
-# net.train(inputs, answers, 1)
-# net.print()
-# for n in inputs:
-#     net.predict(n)
+net.train(inputs, answers, 100000)
+for n in inputs:
+    net.predict(n)

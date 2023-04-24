@@ -28,7 +28,7 @@ Relu = ActivationFunction(
 #TODO finish
 #expanded sigmoid from -1 to 1
 TanH = ActivationFunction(
-    lambda x: (e**x - e**(-x)) / (e**x + e**(-x)),
+    lambda x: (math.e**x - math.e**(-x)) / (math.e**x + math.e**(-x)),
     lambda x: x + 1,
     lambda x: x + 1
 )

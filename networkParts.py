@@ -42,7 +42,7 @@ class Network:
         assert len(input_data) == self.layer_list[0], "ERROR: input data is not in compatible format for input vector"
         
         #set the input data as first layer
-        self.matrices[0] = ml.Matrix.list_to_vec(input_data)
+        self.matrices[0] = ml.Matrix.from_list(input_data, False)
 
         #make a loop for all layers except for the output layer (since this layer will be set by the previous layer)
         for i in range(len(self.matrices) - 1):
@@ -55,12 +55,8 @@ class Network:
             next_layer_index = (i + 3)
 
             #next matrix layer vector of activations = wt * current vector activations
-            print(self.matrices[current_weight_index].matrix)
-            print(self.matrices[i].matrix)
             next_layer_vec = ml.Matrix.multiply_matrix(self.matrices[current_weight_index], self.matrices[i])
             #add the current layer bias
-            self.print()
-            print("-----")
             next_layer_vec.add(self.matrices[current_bias_index])
             #since the next layer vector should be blank, just add the vector calculated above
             self.matrices[next_layer_index].add(next_layer_vec)
@@ -73,7 +69,7 @@ class Network:
 
         #make target vector
         assert len(target_data) == self.layer_list[-1], "ERROR: target data is not in compatible format for output vector"
-        target_vec = ml.Matrix.list_to_vec(target_data)
+        target_vec = ml.Matrix.from_list(target_data, False)
 
         #make error matrices variable
         error_matrices = []
@@ -101,42 +97,40 @@ class Network:
             #delta weights (as described in forward self.matrices fashion)
             #delta weights = lr * OutputErrorVec * d'(output) * TransposedCurrentLayerActivations
 
-            self.matrices[0].print()
             #backward layer vec errors
             t_wm = ml.Matrix.transpose_matrix(self.matrices[weight_index])
             t_wm_p = ml.Matrix.get_row_percentage(t_wm)
             backward_layer_error_vec = ml.Matrix.multiply_matrix(t_wm_p, error_matrices[i])
-            self.matrices[0].print()
             #calculate the gradient: 
             #1) learning rate * forward error vector; 
             gradient = ml.Matrix.multiply_matrix(error_matrices[i], self.learning_rate)
             #2) gradient * derivative of activation function used on the activation of the layer
-            self.matrices[0].print()
-            print("--1--")
-            output_activations = ml.Matrix.list_to_vec(self.matrices[i].matrix)
-            self.matrices[0].print()
+
+
+            output_activations = ml.Matrix.from_list(self.matrices[i].matrix)
+
             # last_vec = ml.Matrix.from_map(self.matrices[prev_layer_vec], ml.f_sigmoid)
             # derive layer pre-activations
-            print("--2--")
 
 
 
 
-            #FIXME This function changes the initial values of self.matrices[i]
+
+
             output_activations.apply_function(self.activation_function.derivative)
 
 
 
-            self.matrices[0].print()
+
             #gradient * derived activation vector
             gradient.multiply(output_activations, True)
-            self.matrices[0].print()
+
             #transpose the activation vector behind the index
             t_input_error_vec = ml.Matrix.transpose_matrix(self.matrices[backward_layer_index])
-            self.matrices[0].print()
+
             #multiply the whole gradient vector by the transposed previous layer vector to make a square matrix
             wmd = ml.Matrix.multiply_matrix(gradient, t_input_error_vec)
-            self.matrices[0].print()
+
             #append in this order: bias, weight, layer
             error_matrices.append(gradient)
             error_matrices.append(wmd)
@@ -144,8 +138,6 @@ class Network:
 
         #change the weights and biases
         assert len(error_matrices) == len(self.matrices), "ERROR: matrices and errors are not same length. Backprop failure."
-        error_matrices[0].print()
-        self.matrices[0].print()
         for i in range(len(error_matrices)):
             
             # print("ERROR")
