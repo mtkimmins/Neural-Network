@@ -1,16 +1,37 @@
+#TODO 
+#   why is the predictions changing when you predict?
+#   why isnt the predictions in XOR correct?
+
+
 import mathLib as ml
 import math
 import random
 
 class Network:
-    def __init__(self, inputs:int, hidden_layers:list, outputs:int, activation_function, learning_rate:float):
+    def __init__(self, layers:list, activation_function, learning_rate:float):
         #save setup settings
-        self.layer_list = [inputs] + hidden_layers + [outputs]
+        self.layers = len(layers)
+        self.layer_list = layers
         self.matrices = []
+        self.matrices = self.get_new_matrices()
         assert type(activation_function) == ml.ActivationFunction, "ERROR: activation function must be a mathLib ActivationFunction object"
         self.activation_function = activation_function
         self.learning_rate = learning_rate
 
+        self.randomize_weights()
+
+
+    def randomize_weights(self):
+        for i in range(len(self.matrices)):
+            if float((i-1)/3).is_integer:
+                #weight matrix
+                self.matrices[i].randomize(0, 1)
+            elif float((i-2)/3).is_integer:
+                #bias vector
+                self.matrices[i].randomize(0, 1)
+
+    def get_new_matrices(self) -> list:
+        new_matrices = []
         # complete library of matrices        
         #[0]    [0,0,0,0]     [0]      |     [0]     [0,0,0]         [0]       |      [0]
         #[0]    [0,0,0,0]     [0]      |     [0]     [0,0,0]         [0]       |      [0]
@@ -26,18 +47,19 @@ class Network:
             if float(i/3).is_integer():
                 #layer vector
                 vec = ml.Matrix(self.layer_list[current_layer_index], 1)
-                self.matrices.append(vec)
+                new_matrices.append(vec)
             elif float((i-1)/3).is_integer():
                 #weight matrix
                 wm = ml.Matrix(self.layer_list[current_layer_index + 1], self.layer_list[current_layer_index])
-                wm.randomize(0, 1)
-                self.matrices.append(wm)
+                new_matrices.append(wm)
             elif float((i-2)/3).is_integer:
                 #bias vector
                 bm = ml.Matrix(self.layer_list[current_layer_index + 1], 1)
-                bm.randomize(0, 1)
-                self.matrices.append(bm)
+                new_matrices.append(bm)
+        return new_matrices
 
+
+    #TODO make a copy of matrices that is returned, and leave current weights alone. useful for prediction without alteration
     def feedforward(self, input_data):
         assert len(input_data) == self.layer_list[0], "ERROR: input data is not in compatible format for input vector"
         
@@ -156,10 +178,13 @@ class Network:
             self.feedforward(train_data[i])
             self.backpropagate(train_labels[i])
             self.reset_layer_vecs()
+            print(i)
 
     def predict(self, test_data):
         self.feedforward(test_data)
         self.print_output()
+        self.reset_layer_vecs()
+
 
 #def evaluate(self, test_data, test_labels):
 
