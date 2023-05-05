@@ -106,3 +106,42 @@ FROM MATHLAB MATRIX MULTIPLICATION:
                             sum_prod += (c_matrix.matrix[row][j] * c_input.matrix[j][col])
                         new_row.append(sum_prod)
                     new_matrix.append(new_row)
+
+ERRORS SEEN:
+
+late April/23
+- all outputs were 0.9; this was due to lack of deep copying the matrices. If multiplied, 
+all matrices involved change. Made deep copies embedded into static methods of matrix library.
+
+1 May 2023
+-consecutively using the predict method would produce different results each time despite no intermittent
+training; this was due to the lack of clearing the vectors before the following feedforward call. As the new
+vectors are simply added to presumably blank vector matrices, the vector values accumulated, producing different
+results each time. Used the reset_vector_values() to clear the vectors at the end of prediction like in train().
+
+2 May 2023
+-outputs were 0.01,0.5,0.5,0.9; this may be due to getting to a local min, gettings stuck. Learning rate
+adjustemnts seem to change these values. A diminishing learning rate changes all outputs to the same = 0.7-0.5.
+Solution could be to batch tweak the network instead of adjusting the network each feedforward/backprop cycle.
+Try adding up the errors from backprop then changing the errors alltogether. Yet this may be equivalent to
+adding it each cycle. Except the errors will be constant if not changed vs always different if changed each time.
+Thus, these strategies will yield different results.
+
+2 May 2023
+-the first output for predict would always be different than the other inputs; this is due to forgetting to
+clear the error vec memory, or the activation vector memory before calculating a brand new error. Reset these
+matrices before predict and train, solved it.
+
+2 May 2023
+-if weights changed after each training session AND each epoch, then the errors of 3/4 outputs predicted will
+be identically wrong, while the other will be correct. Alternatively, this double-up method seems to bring
+the outputs to a definitive point of 1.0 and very low 1e-25 numbers, so that's good.
+
+2 May 2023
+-only sometimes it randomly works; ChatGPT suggested that the network is just too small as a 2,2,1. Increasing
+the hidden layer size (to 5) seems to produce correct predictions 3 for 3 tries in a row. Thus, a 2,2,1 network is
+possible, but too damn small for reliable recreation. UPDATE: still gets stuck.
+
+5 May 2023
+-sometimes it works and sometimes it doesnt. Im assuming that it is just due to getting stuck at a local min. This is
+why its important to check how well the network is performing before prediction.

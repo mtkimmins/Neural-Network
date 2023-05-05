@@ -2,6 +2,10 @@ import networkParts as nwp
 import mathLib as ml
 import pygame
 import settings
+import interface
+
+buttons = []
+
 
 net = nwp.Network([2,2,1], ml.Sigmoid, 0.1)
 
@@ -21,8 +25,7 @@ answers = [
 
 #-----------------FUNCTIONS-------------------------
 def init():
-    #pygame init
-    pygame.init()
+    #pygame init is in settings file as it is imported off the bat, and settings depend on pygame init, like font creation
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT))
     run(screen)
@@ -48,13 +51,57 @@ def get_input():
                 case pygame.K_UP:
                     net.print()
                 case pygame.K_DOWN:
-                    for n in inputs:
-                        net.predict(n)
+                    for n in range(len(inputs)):
+                        net.assess(inputs[n], answers[n])
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            mouse_pos = pygame.mouse.get_pos()
+            for button in buttons:
+                assert type(button) == interface.Button, "Error: object in button list is not a button class"
+                if not button.pressed:
+                    button.pressed = True
+                    if (button.position_x < mouse_pos[0] < button.position_x + button.size_x) and (button.position_y < mouse_pos[1] < button.position_y + button.size_y):
+                        match button.label:
+                            case "TRAIN":
+                                print("TRAINING...")
+                                net.train(inputs, answers, 1000)
+                                print("TRAINED 1000 TIMES")
+                                button.pressed = False
+                                break
+                            case "ASSESS":
+                                print("ASSESSING...")
+                                for i in range(len(inputs)):
+                                    passed = net.assess(inputs[i], answers[i])
+                                    if not passed:
+                                        print("FAIL: network uncalibrated")
+                                        button.pressed = False
+                                        return
+                                print("SUCCESS: network calibrated")
+                                button.pressed = False
+                                break
 
 def update():
     pass
 
 def draw(screen):
+    #draw button for training
+    button_size = (1,50)
+    train_button = interface.Button(button_size, None, "TRAIN")
+    buttons.append(train_button)
+    screen.blit(train_button.surface, (settings.WIDTH/2 - train_button.size_x/2, settings.HEIGHT - train_button.size_y - 140))
+    #draw button for assessment
+    button_size = (200,100)
+    assess_button = interface.Button(button_size, None, "ASSESS")
+    buttons.append(assess_button)
+    screen.blit(assess_button.surface, (settings.WIDTH/2 - button_size[0]/2, settings.HEIGHT - button_size[1]))
+    #draw test node
+    a = pygame.Rect((50,50,100,100))
+    b = pygame.Surface((100,100))
+    node = interface.Node(a, 1)
+    pygame.draw.circle(screen, (255,255,255), center=(50,50), radius=5.0)
+    screen.blit(b, node.rect)
+    
+
+    #draw the network
     net_width = (net.layers*settings.PERCEPTRON_RADIUS) + (net.layers-1)*settings.X_SEP
     x = settings.WIDTH/2 - net_width/2
     
@@ -68,6 +115,8 @@ def draw(screen):
             y += settings.PERCEPTRON_RADIUS*2 + settings.Y_SEP
 
         x += settings.PERCEPTRON_RADIUS*2 + settings.X_SEP
+
+    #KEEP THIS -- ESSENTIAL
     pygame.display.update()
 
 

@@ -535,11 +535,14 @@ class Matrix:
     #####################
     #FIXME BROKEN
     @staticmethod
-    def sum_of_squared_diff_cost(output_vector:list, target_vector:list) -> float:
+    def sum_of_squared_diff_cost(output_vector, target_vector) -> float:
+        assert type(output_vector) == Matrix, "ERROR: output vector is not a matrix"
+        assert type(target_vector) == Matrix, "ERROR: target vector is not in matrix form"
+
         cost = 0.0
         vec_diff = Matrix.subtract_matrix(output_vector, target_vector)
-        for row in range(len(vec_diff)):
-            value = vec_diff[row] * vec_diff[row]
+        for row in range(vec_diff.rows):
+            value = vec_diff.matrix[row][0] * vec_diff.matrix[row][0]
             cost += value
         return cost
 

@@ -1,6 +1,4 @@
 #TODO 
-#   why is the predictions changing when you predict?
-#   why isnt the predictions in XOR correct?
 
 
 import mathLib as ml
@@ -17,9 +15,9 @@ class Network:
         assert type(activation_function) == ml.ActivationFunction, "ERROR: activation function must be a mathLib ActivationFunction object"
         self.activation_function = activation_function
         self.learning_rate = learning_rate
+        self.error_list = []
 
         self.randomize_weights()
-
 
     def randomize_weights(self):
         for i in range(len(self.matrices)):
@@ -58,8 +56,6 @@ class Network:
                 new_matrices.append(bm)
         return new_matrices
 
-
-    #TODO make a copy of matrices that is returned, and leave current weights alone. useful for prediction without alteration
     def feedforward(self, input_data):
         assert len(input_data) == self.layer_list[0], "ERROR: input data is not in compatible format for input vector"
         
@@ -102,9 +98,6 @@ class Network:
 
         #loop through all layers; remember, the matrices are currently reversed
         for i in range(len(self.matrices) - 1):
-            #to be appended at the end
-            errors = []
-
             #layer vectors only
             if not float(i/3).is_integer(): continue
 
@@ -128,21 +121,15 @@ class Network:
             gradient = ml.Matrix.multiply_matrix(error_matrices[i], self.learning_rate)
             #2) gradient * derivative of activation function used on the activation of the layer
 
-
+            #get the target activation layer
             output_activations = ml.Matrix.from_list(self.matrices[i].matrix)
 
-            # last_vec = ml.Matrix.from_map(self.matrices[prev_layer_vec], ml.f_sigmoid)
-            # derive layer pre-activations
-
-
-
-
-
-
+            #get the derivative of the activation layer (derivative incorporates the sigmoid activation squish)
             output_activations.apply_function(self.activation_function.derivative)
 
-
-
+            # gradient.print()
+            # print("--------------")
+            # output_activations.print()
 
             #gradient * derived activation vector
             gradient.multiply(output_activations, True)
@@ -158,6 +145,31 @@ class Network:
             error_matrices.append(wmd)
             error_matrices.append(backward_layer_error_vec)
 
+        #flip all matrix lists
+        error_matrices.reverse()
+        self.matrices.reverse()
+
+        # for i in range(len(error_matrices)):
+        #     error_matrices[i].print()
+        # print("-----------------")
+        # for i in range(len(self.error_list)):
+        #     self.error_list[i].print()
+
+        #send errors to global error variable
+        self.accumulate_errors(error_matrices)
+        self.alter_weights(error_matrices)
+
+
+    def accumulate_errors(self, error_matrices:list):
+        if not self.error_list == []:
+            assert len(error_matrices) == len(self.error_list), "error list length differs from previous error list stored"
+            for i in range(len(error_matrices)):
+                assert type(self.error_list[i]) == ml.Matrix, "error not matrix"
+                self.error_list[i].add(error_matrices[i])
+        else:
+            self.error_list = error_matrices
+
+    def alter_weights(self, error_matrices:list):
         #change the weights and biases
         assert len(error_matrices) == len(self.matrices), "ERROR: matrices and errors are not same length. Backprop failure."
         for i in range(len(error_matrices)):
@@ -168,25 +180,64 @@ class Network:
             # self.matrices[i].print()
 
             self.matrices[i].add(error_matrices[i])
-
-        #flip the matrix list back again for future feedforwards
-        self.matrices.reverse()
+        self.reset_error_vecs()
 
     def train(self, train_data, train_labels, epochs:int):
+        self.reset_all()
+        # lr = float(self.learning_rate)
+        # cost = 1000
+
+        #check answer compatibility
+        # assert ml.Matrix.can_matrix(train_labels), "ERROR: training labels are not vector-able"
+
         for n in range(epochs):
-            i = random.randrange(0, len(train_data))
+            i = random.randrange(0, len(train_labels))
+            # answer_vec = ml.Matrix.from_list(train_labels[i])
             self.feedforward(train_data[i])
+            #set an appropriate learning rate
+            # if cost > ml.Matrix.sum_of_squared_diff_cost(self.matrices[-1], answer_vec):
+            #     #its better than it was
+            #     self.learning_rate *= 0.9
+            # else:
+            #     #its crappier than it was
+            #     self.learning_rate *= 1.1
+            # print(self.learning_rate)
+
             self.backpropagate(train_labels[i])
             self.reset_layer_vecs()
-            print(i)
+            # print(i)
+            
+        self.alter_weights(self.error_list)
+        # self.learning_rate = lr
+        # print(self.learning_rate)
+
+    def assess(self, test_data, test_labels):
+        #clear the cache
+        self.reset_all()
+
+        #check inputed test data
+        assert ml.Matrix.can_vector(test_labels), "ERROR: test data incompatible to matrixize"
+        test_matrix = ml.Matrix.from_list(test_labels)
+
+        #feedforward to get output
+        self.feedforward(test_data)
+        #copy and round the output vector
+        output_matrix = ml.Matrix.copy(self.matrices[-1])
+        for i in range(output_matrix.rows):
+            output_matrix.matrix[i][0] = round(output_matrix.matrix[i][0])
+
+        #check if the rounded vector is the test data, print and return bool
+        if output_matrix.matrix == test_matrix.matrix:
+            # print("PASS")
+            return True
+        # print("FAIL")
+        return False
 
     def predict(self, test_data):
+        self.reset_all()
+
         self.feedforward(test_data)
         self.print_output()
-        self.reset_layer_vecs()
-
-
-#def evaluate(self, test_data, test_labels):
 
 #def save(self, filename):
 
@@ -207,3 +258,10 @@ class Network:
         for layer in range(len(self.layer_list)):
             vec = ml.Matrix(self.layer_list[layer], 1)
             self.matrices[layer*3] = vec
+    
+    def reset_error_vecs(self):
+        self.error_matrices = []
+
+    def reset_all(self):
+        self.reset_error_vecs()
+        self.reset_layer_vecs()
