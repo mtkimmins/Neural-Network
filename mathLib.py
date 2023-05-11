@@ -39,7 +39,6 @@ TanH = ActivationFunction(
 
 
 class Matrix:
-    #21apr/23 - good
     def __init__(self, rows:int, columns:int):
         self.rows = rows
         self.columns = columns
@@ -49,18 +48,15 @@ class Matrix:
             row = [0] * columns
             self.matrix.append(row)
 
-    #21apr/23 - good
     def print(self):
         Matrix.print_matrix(self)
 
-    #21apr/23 - good
     def randomize(self, min:int, max:int):
         for row in range(self.rows):
             for col in range(self.columns):
                 cell = random.uniform(min , max)
                 self.matrix[row][col] = cell
 
-    #21apr/23 - good
     def add(self, input):
         #add matrix
         if type(input) == Matrix:
@@ -82,7 +78,6 @@ class Matrix:
         else:
             print("ERROR: Invalid input to add")
 
-    #21apr/23 - good
     def subtract(self, input):
         #subtract matrix
         if type(input) == Matrix:
@@ -104,7 +99,6 @@ class Matrix:
         else:
             print("ERROR: Invalid input to subtract")
 
-    #21apr/23 - good
     def multiply(self, input, by_element:bool = False):
         new_matrix = []
         #check matrix
@@ -156,13 +150,11 @@ class Matrix:
         else:
             print("ERROR: Invalid input to multiply")
 
-    #21apr/23 - good
     def apply_function(self, func):
         for row in range(self.rows):
             for col in range(self.columns):
                 self.matrix[row][col] = func(self.matrix[row][col])
 
-    #21apr/23 - good
     def transpose(self):
         #make new matrix
         new_matrix = []
@@ -175,7 +167,6 @@ class Matrix:
         self.rows, self.columns = self.columns, self.rows
         self.matrix = new_matrix
 
-    #21apr/23 - good
     def clamp(self, min, max):
         assert max > min, "ERROR:MAX UNDER MIN"
         for row in range(self.rows):
@@ -189,7 +180,6 @@ class Matrix:
     #   STATIC METHODS  #
     #####################
     
-    #21apr/23 - good
     @staticmethod
     def from_list(input:list, is_vector_row:bool=True):
         #check type
@@ -242,7 +232,6 @@ class Matrix:
         matrix_obj.matrix = new_matrix
         return matrix_obj
 
-    #21apr/23 - good
     @staticmethod
     def add_matrix(matrix, input):
         #checks
@@ -293,7 +282,6 @@ class Matrix:
         matrix_obj.matrix = new_matrix
         return matrix_obj
     
-    #21apr/23 - good
     @staticmethod
     def subtract_matrix(matrix, input):
         #checks
@@ -344,7 +332,6 @@ class Matrix:
         matrix_obj.matrix = new_matrix
         return matrix_obj
 
-    #21apr/23 - good
     @staticmethod
     def multiply_matrix(matrix, input, by_element:bool = False):
         #checks
@@ -420,7 +407,6 @@ class Matrix:
         matrix_obj.matrix = new_matrix
         return matrix_obj
     
-    #21apr/23 - good
     @staticmethod
     def transpose_matrix(matrix):
         #ensure matrix integrity
@@ -446,7 +432,6 @@ class Matrix:
         matrix_obj.matrix = new_matrix
         return matrix_obj
 
-    #21apr/23 - good
     @staticmethod
     def from_map(matrix, func):
         #checks
@@ -473,7 +458,6 @@ class Matrix:
         matrix_obj.matrix = new_matrix
         return matrix_obj
 
-    #21apr/23 - good
     @staticmethod
     def get_row_percentage(matrix):
         #checks
@@ -508,7 +492,6 @@ class Matrix:
         matrix_obj.matrix = new_matrix
         return matrix_obj
 
-    #21apr/23 - good
     @staticmethod
     def copy(matrix):
         #check if matrix
@@ -533,7 +516,6 @@ class Matrix:
     #####################
     #   COST FUNCTIONS  #
     #####################
-    #FIXME BROKEN
     @staticmethod
     def sum_of_squared_diff_cost(output_vector, target_vector) -> float:
         assert type(output_vector) == Matrix, "ERROR: output vector is not a matrix"
@@ -550,7 +532,6 @@ class Matrix:
     #   METHODS TO CHECK MATRIX INTEGRITY   #
     #########################################
     
-    #21apr/23 - good
     @staticmethod
     def can_multiply_matrices(matrix1, matrix2) -> bool:
         #check if matrices
@@ -563,7 +544,6 @@ class Matrix:
         if not m1_cols == m2_rows: return False
         return True
     
-    #21apr/23 - good
     @staticmethod
     def is_same_dimensions(matrix1, matrix2) -> bool:
         if not type(matrix1) == Matrix: return False
@@ -578,7 +558,6 @@ class Matrix:
                 if type(matrix2.matrix[y][x]) is list: return False
         return True
     
-    #21apr/23 - good
     @staticmethod
     def is_same_dimensions_detailed(matrix1, matrix2) -> str:
         #checking objects
@@ -596,7 +575,6 @@ class Matrix:
                 if type(matrix2.matrix[y][x]) is list: return "ERROR: matrix2 more than 2d list as input at row,col: (" +str(y) + "," + str(x) + ")"
         return "Compatible matrices confirmed"
     
-    #21apr/23 - good
     @staticmethod
     def can_matrix(array:list) -> bool:
         for y in range(len(array)):
@@ -606,14 +584,12 @@ class Matrix:
                 if type(array[y][x]) is list: return False
         return True
 
-    #21apr/23 - good
     @staticmethod
     def can_vector(array:list) -> bool:
         for i in array:
             if type(i) == list: return False
         return True
 
-    #21apr - good
     @staticmethod
     def print_matrix(new_matrix):
         assert type(new_matrix) == Matrix, "ERROR: Input is not a matrix; No matrix to print"

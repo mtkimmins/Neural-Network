@@ -6,6 +6,7 @@ import pygame
 class Button:
     def __init__(self, size:list, image=None, label:str="", base_color=(255,255,255), text_color=(0,0,0)):
         #the position is top-left corner
+        self.position = [0,0]
         self.base_color = base_color
         self.text_color = text_color
         self.label = label
@@ -46,6 +47,23 @@ class Button:
 
 
 class Node:
-    def __init__(self, rect, value):
-        self.rect = rect
+    def __init__(self, value:float, size:list):
         self.value = value
+        #get adjusted size for text
+        self.text = settings.font.render(str(self.value), True, (255,255,255))
+        width = max(size[0], self.text.get_rect().width)
+        height = max(size[1], self.text.get_rect().height)
+        self.size = (width, height)
+
+        self.output_nodes = []
+        self.surface = pygame.Surface(self.size)
+
+        self.set_surface()
+
+    def set_output_nodes(self, output_nodes:list):
+        self.output_nodes = output_nodes
+
+    def set_surface(self):
+        size = (self.surface.get_rect().width, self.surface.get_rect().height)
+        pygame.draw.circle(self.surface, (255,0,0), (size[0]/2, size[1]/2), size[0]/2)
+        self.surface.blit(self.text, self.surface.get_rect())
