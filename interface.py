@@ -1,24 +1,30 @@
 #TODO make sure the text scales with the actual size of the button
 
-import settings
 import pygame
 
+#TODO
+#-when click elsewhere than buttons, all buttons are disabled
+#-all buttons diable after something else is clicked, but as long as its on that button right after being clicked for the first time,
+#this is irrelevant of actual position on the button, can move around within the button and it still is active
+#-make a consequence setter
+
+
+#############
+#   BUTTON  #
+#############
 class Button:
-    def __init__(self, size:list, image=None, label:str="", base_color=(255,255,255), text_color=(0,0,0)):
+    def __init__(self, position:list, size:list, image=None, label:str=""):
         #the position is top-left corner
-        self.position = [0,0]
-        self.base_color = base_color
-        self.text_color = text_color
+        self.position = position
+        self.size = size
+        self.base_color = (255,255,255)
+        self.text_color = (0,0,0)
         self.label = label
         self.image = image
+        self.surface = pygame.Surface(self.size)
         self.pressed = False
-        
-        #make surface the biggest dimensions between the text and the size specified
-        text = settings.font.render(self.label, True, self.text_color)
-        text_center = (text.get_rect().size[0]/2, text.get_rect().size[1]/2)
-        self.size_x = max(text.get_rect().size[0], size[0])
-        self.size_y = max(text.get_rect().size[1], size[1])
-        self.surface = pygame.Surface((self.size_x, self.size_y))
+        self.effect_function = None
+  
         self.surface_center = (self.surface.get_rect().size[0]/2, self.surface.get_rect().size[1]/2)
 
         #use an image and blit to surface, else blit a blank rect
@@ -28,9 +34,35 @@ class Button:
             pygame.draw.rect(self.surface, self.base_color, self.surface.get_rect())
 
         #blit the text
-        self.surface.blit(text, (self.surface_center[0] - text_center[0], self.surface_center[1] - text_center[1]))
+        self.add_font(40)
+        
     
-    #------------SETTER FUNCTIONS-----------
+    #---------------AUX FUNCS---------------
+    def add_font(self, size):
+        font_name = "Arial"
+        font_size = size
+        font = pygame.font.SysFont(font_name, font_size)
+        text = font.render(self.label, True, self.text_color)
+        #ensure the font fits the size specified
+        while text.get_width() > self.surface.get_width() or text.get_height() > self.surface.get_height():
+            #break conditions
+            if font_size == 1: break
+
+            font_size -= 1
+            font = pygame.font.SysFont(font_name, font_size)
+            text = font.render(self.label, True, self.text_color)
+        
+        #blit to surface
+        text_center = (text.get_rect().size[0]/2, text.get_rect().size[1]/2)
+        self.surface.blit(text, (self.surface_center[0] - text_center[0], self.surface_center[1] - text_center[1]))
+        
+
+
+
+
+    #------------SETTERS--------------------
+    def set_effect(self, new_effect_function):
+        self.effect_function = new_effect_function
 
     def set_size(self, new_size:list):
         self.size = new_size
@@ -38,19 +70,47 @@ class Button:
     def set_position(self, new_position:list):
         self.position = new_position
 
-    def set_color(self, new_color):
+    def set_color(self, new_color:tuple):
         self.color = new_color
     
-    def set_text(self, new_text):
+    def set_text(self, new_text:str):
         self.text = new_text
 
+    #---------------GETTERS-----------------
+    def get_surface(self) -> pygame.Surface:
+        return self.surface
+
+    def get_position(self) -> list:
+        return self.position
+    
+    def get_size(self) -> list:
+        return self.size
+    
+    def is_pressed(self) -> bool:
+        return self.pressed
+
+    #-------EXTERNALS-------------------
+    def is_event_clicked(self, event_pos):
+        if (self.position[0] + self.size[0]) > event_pos[0] > self.position[0] and (self.position[1] + self.size[1] > event_pos[1] > self.position[1]):
+            print(self.effect_function)
+            pressed = True
+            if self.effect_function != None:
+                self.effect_function
 
 
+#############
+#   NODE    #
+#############
 class Node:
     def __init__(self, value:float, size:list):
+        self.width_margin = 5
+        self.height_margin = 5
+
+
         self.value = value
         #get adjusted size for text
-        self.text = settings.font.render(str(self.value), True, (255,255,255))
+        font = pygame.font.SysFont("Arial", 12)
+        self.text = font.render(str(self.value), True, (255,255,255))
         width = max(size[0], self.text.get_rect().width)
         height = max(size[1], self.text.get_rect().height)
         self.size = (width, height)
