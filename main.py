@@ -3,11 +3,14 @@ import mathLib as ml
 import pygame
 import settings
 import interface
+import numpy
 
 buttons = []
-
+whiteboard = interface.Canvas((0,0),(0,0))
 
 net = nwp.Network([2,2,1], ml.Sigmoid, 0.1)
+
+
 
 inputs = [
     [0,0],
@@ -22,6 +25,26 @@ answers = [
     [1],
     [1]
 ]
+X,Y = numpy.load("data/new_img_array.npy"), numpy.load("data/new_y_true.npy")
+print(X.shape)
+x1 = []
+for i in range(X.shape[0]):
+    row = []
+    for j in range(X.shape[1]):
+        row.append(X[i,j])
+    x1.append(row)
+x2 = ml.Matrix.from_list(x1)
+
+x2.print()
+
+print(Y.shape)
+y1 = []
+for i in range(Y.shape[0]):
+    y1.append(Y[i])
+y2 = ml.Matrix.from_list(y1)
+
+
+y2.print()
 
 #-----------------FUNCTIONS-------------------------
 #####################
@@ -32,7 +55,8 @@ def init():
     pygame.init()
     clock = pygame.time.Clock()
     screen = pygame.display.set_mode((settings.WIDTH, settings.HEIGHT))
-    create_UI()
+    screen.fill((255,255,255))
+    create_UI(screen)
     run(screen)
 
 def run(screen:pygame.Surface):
@@ -84,6 +108,21 @@ def get_input():
                     #             print("SUCCESS: network calibrated")
                     #             button.pressed = False
                     #     button.pressed = False
+            #check whiteboard
+            if whiteboard.is_hovered(mouse_pos):
+                whiteboard.draw(mouse_pos)
+                whiteboard.set_drawing(True)
+        
+        elif event.type == pygame.MOUSEMOTION:
+            if whiteboard.drawing:
+                mouse_pos = pygame.mouse.get_pos()
+                whiteboard.draw(mouse_pos)
+
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if whiteboard.drawing:
+                whiteboard.set_drawing(False)
+
+
 
 def update():
     pass
@@ -92,26 +131,31 @@ def draw(screen:pygame.Surface):
     for button in buttons:
         assert type(button) == interface.Button
         screen.blit(button.get_surface(), button.get_position())
+    screen.blit(whiteboard.get_surface(), whiteboard.get_position())
+
 
     pygame.display.update()
 
 #########################
 #   LOCAL FUNCTIONS     #
 #########################
-def create_UI():
-    #called in init to make all the menu objects
+def create_UI(screen:pygame.Surface):   #called in init to make all the menu objects
+    #Canvas setup
+    wb_size = (28,28)
+    wb_pos = (settings.CENTRE[0] - wb_size[0]/2, 50 - wb_size[1]/2)
+    whiteboard.set_size(wb_size)
+    whiteboard.set_position(wb_pos)
+
     #Training button
     button_size = (200,100)
     button_pos = (settings.CENTRE[0] - button_size[0]/2, settings.HEIGHT - button_size[1])
     train_button = interface.Button(button_pos, button_size, None, "TRAIN")
-    train_button.set_effect(net.train(inputs, answers, 1000))
     buttons.append(train_button)
 
     #Assess button
     button_size = (200,100)
     button_pos = (settings.CENTRE[0] - button_size[0]/2, settings.HEIGHT - button_size[1]*2 - 10)
     assess_button = interface.Button(button_pos, button_size, None, "ASSESS")
-    assess_button.set_effect(net.print())
     buttons.append(assess_button)
 
 #------------------------------------------------------------------------------

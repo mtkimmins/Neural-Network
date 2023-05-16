@@ -1,5 +1,6 @@
 #TODO make sure the text scales with the actual size of the button
 
+import math
 import pygame
 
 #TODO
@@ -23,7 +24,6 @@ class Button:
         self.image = image
         self.surface = pygame.Surface(self.size)
         self.pressed = False
-        self.effect_function = None
   
         self.surface_center = (self.surface.get_rect().size[0]/2, self.surface.get_rect().size[1]/2)
 
@@ -61,9 +61,6 @@ class Button:
 
 
     #------------SETTERS--------------------
-    def set_effect(self, new_effect_function):
-        self.effect_function = new_effect_function
-
     def set_size(self, new_size:list):
         self.size = new_size
     
@@ -92,10 +89,7 @@ class Button:
     #-------EXTERNALS-------------------
     def is_event_clicked(self, event_pos):
         if (self.position[0] + self.size[0]) > event_pos[0] > self.position[0] and (self.position[1] + self.size[1] > event_pos[1] > self.position[1]):
-            print(self.effect_function)
-            pressed = True
-            if self.effect_function != None:
-                self.effect_function
+            pass
 
 
 #############
@@ -127,3 +121,58 @@ class Node:
         size = (self.surface.get_rect().width, self.surface.get_rect().height)
         pygame.draw.circle(self.surface, (255,0,0), (size[0]/2, size[1]/2), size[0]/2)
         self.surface.blit(self.text, self.surface.get_rect())
+
+
+#############
+#   CANVAS  #
+#############
+class Canvas:
+    def __init__(self, size:tuple, position:tuple) -> None:
+        self.size = size
+        self.position = position
+        self.surface = pygame.Surface(self.size)
+        self.draw_color = (255,255,255) #White default
+        self.background_color = (0,0,0) #black default
+        self.drawing_radius = 0
+        self.drawing = False
+
+    def draw(self, draw_position:tuple):
+        #use the x coord provided
+        # if self.is_hovered(draw_position):
+        for i in range(-self.drawing_radius, self.drawing_radius + 1):
+            for j in range(-self.drawing_radius, self.drawing_radius + 1):
+                self.surface.set_at((math.floor(draw_position[0] - self.position[0]) + i, math.floor(draw_position[1] - self.position[1]) + j), self.draw_color)
+
+    #----------------SETTERS-------------------------
+    def set_draw_color(self, new_value:tuple):
+        self.draw_color = new_value
+
+    def set_background_color(self, new_value:tuple):
+        self.background_color = new_value
+        self.surface.fill(self.background_color)
+
+    def set_size(self, new_size:tuple):
+        self.size = new_size
+        self.surface = pygame.Surface(self.size)
+    
+    def set_position(self, new_position:tuple):
+        self.position = new_position
+    
+    def set_drawing(self, new_value:bool):
+        self.drawing = new_value
+    
+    #------------------GETTERS---------------------
+    def get_surface(self) -> pygame.Surface:
+        return self.surface
+
+    def get_position(self) -> tuple:
+        return tuple(self.position)
+    
+    def is_hovered(self, mouse_position:tuple):
+        if (self.position[0] + self.size[0]) > mouse_position[0] > self.position[0] and (self.position[1] + self.size[1] > mouse_position[1] > self.position[1]):
+            return True
+        return False
+
+    #---------------EXTERNALS-------------------
+    
+
