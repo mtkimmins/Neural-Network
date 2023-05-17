@@ -1,5 +1,4 @@
-import networkParts as nwp
-import mathLib as ml
+import NeuralNetwork as nn
 import pygame
 import settings
 import interface
@@ -8,7 +7,7 @@ import numpy
 buttons = []
 whiteboard = interface.Canvas((0,0),(0,0))
 
-net = nwp.Network([2,2,1], ml.Sigmoid, 0.1)
+# net = nwp.Network([2,2,1], ml.Sigmoid, 0.1)
 
 
 
@@ -25,26 +24,26 @@ answers = [
     [1],
     [1]
 ]
-X,Y = numpy.load("data/new_img_array.npy"), numpy.load("data/new_y_true.npy")
-print(X.shape)
-x1 = []
-for i in range(X.shape[0]):
-    row = []
-    for j in range(X.shape[1]):
-        row.append(X[i,j])
-    x1.append(row)
-x2 = ml.Matrix.from_list(x1)
+# X,Y = numpy.load("data/new_img_array.npy"), numpy.load("data/new_y_true.npy")
+# print(X.shape)
+# x1 = []
+# for i in range(X.shape[0]):
+#     row = []
+#     for j in range(X.shape[1]):
+#         row.append(X[i,j])
+#     x1.append(row)
+# x2 = ml.Matrix.from_list(x1)
 
-x2.print()
+# x2.print()
 
-print(Y.shape)
-y1 = []
-for i in range(Y.shape[0]):
-    y1.append(Y[i])
-y2 = ml.Matrix.from_list(y1)
+# print(Y.shape)
+# y1 = []
+# for i in range(Y.shape[0]):
+#     y1.append(Y[i])
+# y2 = ml.Matrix.from_list(y1)
 
 
-y2.print()
+# y2.print()
 
 #-----------------FUNCTIONS-------------------------
 #####################
@@ -74,15 +73,16 @@ def get_input():
             quit()
         #when keys are pressed down
         elif event.type == pygame.KEYDOWN:
-            match event.key:
-                case pygame.K_END:
-                    net.train(inputs, answers, 1000)
-                case pygame.K_UP:
-                    net.print()
-                case pygame.K_DOWN:
-                    for n in range(len(inputs)):
-                        a = net.assess(inputs[n], answers[n])
-                        print(a)
+            pass
+            # match event.key:
+            #     case pygame.K_END:
+            #         net.train(inputs, answers, 1000)
+            #     case pygame.K_UP:
+            #         net.print()
+            #     case pygame.K_DOWN:
+            #         for n in range(len(inputs)):
+            #             a = net.assess(inputs[n], answers[n])
+            #             print(a)
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
             for button in buttons:

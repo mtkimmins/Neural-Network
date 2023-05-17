@@ -1,25 +1,38 @@
 #TODO 
 
-
-import mathLib as ml
-import math
-import random
+#------------IMPORTS-----------------
 import pygame
-import interface
+import numpy as np
+
+
+#-------------CLASSES-----------------
+#############################
+#   ACTIVATION FUNCTIONS    #
+#############################
+class ActivationFunction:
+    def __init__(self, function, reverse, derivative):
+        self.function = function
+        self.reverse = reverse
+        self.derivative = derivative
+        
+#sqiggle between 0 and 1
+Sigmoid = ActivationFunction(
+    lambda x: 1/(1+ np.e**(-x)),
+    lambda y: 0.5 if (y == 0) else (1 if (y == 1) else -1 * np.log((1/y - 1))),
+    lambda y: y * (1-y)
+)
 
 
 #####################
-#   NETWORK CORE    #
+#   NEURAL NETWORK  #
 #####################
-
 class Network:
     def __init__(self, layers:list, activation_function, learning_rate:float):
         #save setup settings
         self.layers = len(layers)
         self.layer_list = layers
-        self.matrices = []
         self.matrices = self.get_new_matrices()
-        assert type(activation_function) == ml.ActivationFunction, "ERROR: activation function must be a mathLib ActivationFunction object"
+        assert type(activation_function) == ActivationFunction, "ERROR: activation function must be a mathLib ActivationFunction object"
         self.activation_function = activation_function
         self.learning_rate = learning_rate
         self.error_list = []
@@ -27,13 +40,14 @@ class Network:
         self.randomize_weights()
 
     def randomize_weights(self):
+        rng = np.random.default_rng()
         for i in range(len(self.matrices)):
             if float((i-1)/3).is_integer:
                 #weight matrix
-                self.matrices[i].randomize(0, 1)
+                self.matrices[i] = rng.random(size=self.matrices[i].shape)
             elif float((i-2)/3).is_integer:
                 #bias vector
-                self.matrices[i].randomize(0, 1)
+                self.matrices[i] = rng.random(size=self.matrices[i].shape)
 
     def get_new_matrices(self) -> list:
         new_matrices = []
@@ -51,23 +65,24 @@ class Network:
 
             if float(i/3).is_integer():
                 #layer vector
-                vec = ml.Matrix(self.layer_list[current_layer_index], 1)
+                vec = np.empty((self.layer_list[current_layer_index], 1))
                 new_matrices.append(vec)
             elif float((i-1)/3).is_integer():
                 #weight matrix
-                wm = ml.Matrix(self.layer_list[current_layer_index + 1], self.layer_list[current_layer_index])
+                wm = np.empty(self.layer_list[current_layer_index + 1], self.layer_list[current_layer_index])
                 new_matrices.append(wm)
             elif float((i-2)/3).is_integer:
                 #bias vector
-                bm = ml.Matrix(self.layer_list[current_layer_index + 1], 1)
+                bm = np.empty(self.layer_list[current_layer_index + 1], 1)
                 new_matrices.append(bm)
+        print(new_matrices)
         return new_matrices
 
     def feedforward(self, input_data):
         assert len(input_data) == self.layer_list[0], "ERROR: input data is not in compatible format for input vector"
         
         #set the input data as first layer
-        self.matrices[0] = ml.Matrix.from_list(input_data, False)
+        self.matrices[0] = np.array(input_data)
 
         #make a loop for all layers except for the output layer (since this layer will be set by the previous layer)
         for i in range(len(self.matrices) - 1):
@@ -80,14 +95,16 @@ class Network:
             next_layer_index = (i + 3)
 
             #next matrix layer vector of activations = wt * current vector activations
-            next_layer_vec = ml.Matrix.multiply_matrix(self.matrices[current_weight_index], self.matrices[i])
+            next_layer_vec = np.matmul(self.matrices[current_weight_index], self.matrices[i])
             #add the current layer bias
-            next_layer_vec.add(self.matrices[current_bias_index])
+            next_layer_vec += self.matrices[current_bias_index]
             #since the next layer vector should be blank, just add the vector calculated above
-            self.matrices[next_layer_index].add(next_layer_vec)
+            self.matrices[next_layer_index] += next_layer_vec
             #squish result with an activation function
-            self.matrices[next_layer_index].apply_function(self.activation_function.function)
-                
+            self.matrices[next_layer_index] = np.apply_over_axes(self.activation_function.function, self.matrices[next_layer_index])
+
+
+    #TODO THIS IS WHERE I LEFT OFF IN THE CONVERSION        
     def backpropagate(self, target_data):
         #flip the matrices to go backward
         self.matrices.reverse()
@@ -274,44 +291,3 @@ class Network:
         self.reset_layer_vecs()
 
 
-#########################################
-#   RENDERER FOR NETWORK THRU PYGAME    #
-#########################################
-
-class NetworkRender:
-    #TODO
-    #1)create all the nodes
-    #2)connect all the nodes
-    #3)draw onto surface
-    def __init__(self, network:Network):
-        self.network = network
-
-        self.v_gap = 10
-        self.h_gap = 20
-        self.node_size = pygame.Rect(0,0,10,10)
-        self.surface_size = self.calculate_surface_size()
-        
-        self.surface = pygame.Surface(self.surface_size)
-        self.surface.set_colorkey((255,255,255))
-        self.create_nodes()
-
-
-    def get_surface(self)->pygame.Surface:
-        return self.surface
-
-    def create_nodes(self):
-        pass
-        #for each layer
-        for i in range(len(self.network.layer_list)):
-            #for each node in each layer
-            for j in range(self.network.layer_list[i]):
-                node = interface.Node(round(self.network.matrices[i*3].matrix[j][0]), self.node_size)
-                coords = (i*(self.node_size.width + self.h_gap),
-                          j*(self.node_size.height + self.v_gap))
-                self.surface.blit(node.surface, coords)
-
-    def calculate_surface_size(self)->tuple:
-        width = (self.network.layers * self.node_size.width) + (self.network.layers - 1) * self.h_gap
-        widest_layer = max(self.network.layer_list)
-        height = (widest_layer * self.node_size.height) + (widest_layer - 1) * self.v_gap
-        return (width, height)
