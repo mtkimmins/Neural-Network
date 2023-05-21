@@ -23,6 +23,7 @@ class Network:
         self.activation_function = activation_function
         self.learning_rate = learning_rate
         self.error_list = []
+        self.verified = False
 
         self.randomize_weights()
 
@@ -191,6 +192,7 @@ class Network:
 
     def train(self, train_data, train_labels, epochs:int):
         self.reset_all()
+
         # lr = float(self.learning_rate)
         # cost = 1000
 
@@ -198,43 +200,51 @@ class Network:
         # assert ml.Matrix.can_matrix(train_labels), "ERROR: training labels are not vector-able"
 
         for n in range(epochs):
-            i = random.randrange(0, len(train_labels))
-            # answer_vec = ml.Matrix.from_list(train_labels[i])
-            self.feedforward(train_data[i])
-            #set an appropriate learning rate
-            # if cost > ml.Matrix.sum_of_squared_diff_cost(self.matrices[-1], answer_vec):
-            #     #its better than it was
-            #     self.learning_rate *= 0.9
-            # else:
-            #     #its crappier than it was
-            #     self.learning_rate *= 1.1
-            # print(self.learning_rate)
-
-            self.backpropagate(train_labels[i])
-            self.reset_layer_vecs()
-            # print(i)
+            c_train_data = list(train_data)
+            c_train_labels = list(train_labels)
+            for j in range(len(train_data)):
+                i = random.randrange(0, len(c_train_data))
+                assert type(c_train_data) == list, "train data is not a list"
+                td = c_train_data.pop(i)
+                assert type(td) == ml.Matrix, "selected matrix input is not a matrix"
+                # answer_vec = ml.Matrix.from_list(train_labels[i])
+                self.feedforward(ml.Matrix.flatten_to_list(td)) #should be a list input
+                #set an appropriate learning rate
+                # if cost > ml.Matrix.sum_of_squared_diff_cost(self.matrices[-1], answer_vec):
+                #     #its better than it was
+                #     self.learning_rate *= 0.9
+                # else:
+                #     #its crappier than it was
+                #     self.learning_rate *= 1.1
+                # print(self.learning_rate)
+                tl = c_train_labels.pop(i)
+                assert type(tl) == ml.Matrix, "selected matrix label is not a matrix"
+                self.backpropagate(ml.Matrix.flatten_to_list(tl)) #should be a list input
+                self.reset_layer_vecs()
+                # print(i)
             
-        self.alter_weights(self.error_list)
+        # self.alter_weights(self.error_list)
         # self.learning_rate = lr
         # print(self.learning_rate)
 
     def assess(self, test_data, test_labels):
+        #Only assesses 1 instance
         #clear the cache
         self.reset_all()
 
         #check inputed test data
-        assert ml.Matrix.can_vector(test_labels), "ERROR: test data incompatible to matrixize"
-        test_matrix = ml.Matrix.from_list(test_labels)
+        # assert ml.Matrix.can_vector(test_labels.matrix[0]), "ERROR: test data incompatible to matrixize"
+        test_matrix_data = ml.Matrix.flatten_to_list(test_data)
 
         #feedforward to get output
-        self.feedforward(test_data)
+        self.feedforward(test_matrix_data)
         #copy and round the output vector
         output_matrix = ml.Matrix.copy(self.matrices[-1])
         for i in range(output_matrix.rows):
             output_matrix.matrix[i][0] = round(output_matrix.matrix[i][0])
 
         #check if the rounded vector is the test data, print and return bool
-        if output_matrix.matrix == test_matrix.matrix:
+        if output_matrix.matrix == test_labels.matrix:
             # print("PASS")
             return True
         # print("FAIL")
@@ -245,6 +255,20 @@ class Network:
 
         self.feedforward(test_data)
         self.print_output()
+
+    def train_to_cost(self, train_data, train_label) -> float:
+        self.reset_all()
+        assert type(train_data) == ml.Matrix, "train data not a matrix"
+        assert type(train_label) == ml.Matrix, "train label not a matrix"
+
+        self.feedforward(ml.Matrix.flatten_to_list(train_data)) #should be a list input
+
+        assert len(train_label.matrix[0]) == len(self.matrices[-1].matrix), "train labels and net output is not same length."
+        cost = ml.Matrix.sum_of_squared_diff_cost(self.matrices[-1], ml.Matrix.transpose_matrix(train_label))
+
+        self.backpropagate(train_label.matrix[0]) #should be a list input
+        
+        return cost
 
 #def save(self, filename):
 

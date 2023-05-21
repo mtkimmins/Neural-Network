@@ -1,50 +1,70 @@
+#REFERENCES
 import networkParts as nwp
 import mathLib as ml
 import pygame
 import settings
 import interface
 import numpy
+import random
 
+#vars
+EPOCH_MAX = 5000
+training_cycles = 0
+epochs = 0
+MANUAL_VERIFY_MAX = 10
+manual_verification_counter = 0
+paused = False
+manual_override = False
+counter = 0
+
+
+
+#GUI
 buttons = []
 whiteboard = interface.Canvas((0,0),(0,0))
+graph = interface.Graph((200,200), (0,0))
 
-net = nwp.Network([2,2,1], ml.Sigmoid, 0.1)
+#load the data into list
+inputs = []
+outputs = []
+
+c_inputs = list(inputs)
+c_outputs = list(outputs)
+
+inputs_np = numpy.load("data/new_img_array.npy")
+outputs_np = numpy.load("data/new_y_true.npy")
+# print(outputs_np.tolist())
+#dict to translate output to correct array
+int_to_list = {
+    0:[1,0,0,0,0,0,0,0,0,0],
+    1:[0,1,0,0,0,0,0,0,0,0],
+    2:[0,0,1,0,0,0,0,0,0,0],
+    3:[0,0,0,1,0,0,0,0,0,0],
+    4:[0,0,0,0,1,0,0,0,0,0],
+    5:[0,0,0,0,0,1,0,0,0,0],
+    6:[0,0,0,0,0,0,1,0,0,0],
+    7:[0,0,0,0,0,0,0,1,0,0],
+    8:[0,0,0,0,0,0,0,0,1,0],
+    9:[0,0,0,0,0,0,0,0,0,1]
+}
+#inputs
+for i in range(inputs_np.shape[0]):
+    i_matrix = ml.Matrix.from_list(inputs_np[i].tolist())
+    inputs.append(i_matrix)
+#outputs
+answers = outputs_np.tolist()
+for i in range(len(answers)):
+    out = int_to_list[answers[i]]
+    o_matrix = ml.Matrix.from_list(out)
+    # print(o_matrix.matrix)
+    outputs.append(o_matrix)
 
 
 
-inputs = [
-    [0,0],
-    [1,1],
-    [1,0],
-    [0,1]
-]
-
-answers = [
-    [0],
-    [0],
-    [1],
-    [1]
-]
-X,Y = numpy.load("data/new_img_array.npy"), numpy.load("data/new_y_true.npy")
-print(X.shape)
-x1 = []
-for i in range(X.shape[0]):
-    row = []
-    for j in range(X.shape[1]):
-        row.append(X[i,j])
-    x1.append(row)
-x2 = ml.Matrix.from_list(x1)
-
-x2.print()
-
-print(Y.shape)
-y1 = []
-for i in range(Y.shape[0]):
-    y1.append(Y[i])
-y2 = ml.Matrix.from_list(y1)
 
 
-y2.print()
+#NETWORK STUFF
+net = nwp.Network([28**2, 16, 16, 10], ml.Sigmoid, 0.1)
 
 #-----------------FUNCTIONS-------------------------
 #####################
@@ -76,42 +96,61 @@ def get_input():
         elif event.type == pygame.KEYDOWN:
             match event.key:
                 case pygame.K_END:
-                    net.train(inputs, answers, 1000)
+                    net.train(inputs, outputs, 1000)
                 case pygame.K_UP:
                     net.print()
                 case pygame.K_DOWN:
                     for n in range(len(inputs)):
-                        a = net.assess(inputs[n], answers[n])
+                        a = net.assess(inputs[n], outputs[n])
                         print(a)
+                        
         elif event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
             for button in buttons:
                 assert type(button) == interface.Button, "Error: object in button list is not a button class"
                 if not button.pressed:
-                    button.is_event_clicked(mouse_pos)
-                    # button.pressed = True
-                    # if (button.position[0] < mouse_pos[0] < button.position[0] + button.size[0]) and (button.position[1] < mouse_pos[1] < button.position[1] + button.size[1]):
-                    #     match button.label:
-                    #         case "TRAIN":
-                    #             print("TRAINING...")
-                    #             net.train(inputs, answers, 1000)
-                    #             print("TRAINED 1000 TIMES")
-                    #             button.pressed = False
-                    #         case "ASSESS":
-                    #             print("ASSESSING...")
-                    #             for i in range(len(inputs)):
-                    #                 passed = net.assess(inputs[i], answers[i])
-                    #                 if not passed:
-                    #                     print("FAIL: network uncalibrated")
-                    #                     button.pressed = False
-                    #                     return
-                    #             print("SUCCESS: network calibrated")
-                    #             button.pressed = False
-                    #     button.pressed = False
+                    if button.is_clicked(mouse_pos):
+                        button.pressed = True
+                        match button.label:
+                            case "TRAIN":
+                                print("TRAINING...")
+                                net.train(inputs, answers, 1000)
+                                print("TRAINED 1000 TIMES")
+                                button.pressed = False
+                            case "ASSESS":
+                                print("ASSESSING...")
+                                for i in range(len(inputs)):
+                                    passed = net.assess(inputs[i], answers[i])
+                                    if not passed:
+                                        print("FAIL: network uncalibrated")
+                                        button.pressed = False
+                                        return
+                                print("SUCCESS: network calibrated")
+                                button.pressed = False
+                            case "PREDICT":
+                                print("PREDICTING...")
+                                canvas_data:list = whiteboard.get_surface_as_list()
+                                net.predict(canvas_data)
+                                global paused
+                                if input("Is this correct? Y/N") == "N":
+                                    global manual_verification_counter
+                                    
+
+                                    manual_verification_counter = 0
+                                    paused = False
+                                    whiteboard.clear()
+                                else:
+                                    print("SUCCESS!!!!")
+                                    net.verified = True
+                                    paused = False
+                                    
+                                    whiteboard.clear()
+                        button.pressed = False
             #check whiteboard
             if whiteboard.is_hovered(mouse_pos):
-                whiteboard.draw(mouse_pos)
                 whiteboard.set_drawing(True)
+                whiteboard.draw(mouse_pos)
+                
         
         elif event.type == pygame.MOUSEMOTION:
             if whiteboard.drawing:
@@ -125,13 +164,66 @@ def get_input():
 
 
 def update():
-    pass
+    # net.train(inputs, outputs, 1)
+    # net.print()
+    global counter
+    global c_inputs
+    global c_outputs
+
+    if c_inputs == []:
+        c_inputs = list(inputs)
+        c_outputs = list(outputs)
+
+    i = random.randint(0,len(c_inputs)-1)
+    c_in = c_inputs.pop(i)
+    c_out = c_outputs.pop(i)
+    cost = net.train_to_cost(c_in, c_out)
+    print(cost)
+    # graph.add_point((counter, net.train_to_cost(c_in, c_out)))
+    counter += 1
+
+    if cost < 1:
+        print("MANUAL VERIFICATION REQUIRED...\n PLEASE DRAW AND PREDICT")
+        whiteboard.disabled = False
+        paused = True
+    
+    # global paused
+    # global manual_override
+
+    # if not paused:
+    #     if not net.verified:
+    #         train_ai()
+    #         global manual_verification_counter
+    #         if manual_verification_counter < MANUAL_VERIFY_MAX:
+    #             for n in range(10):
+    #                 i = random.randrange(0, len(outputs))
+    #                 # print(outputs[i].matrix)
+    #                 if not net.assess(inputs[i], outputs[i]):
+    #                     print("FAIL TO VERIFY")
+    #                     break
+    #                 else:
+    #                     net.verified = True
+    #                     print("VERIFIED")
+    #                     whiteboard.disabled = False
+    #             manual_verification_counter += 1
+    #         else:
+    #             if manual_override:
+    #                 print("MANUAL VERIFICATION REQUIRED...\n PLEASE DRAW AND PREDICT")
+    #                 whiteboard.disabled = False
+    #                 paused = True
+    #             else:
+    #                 manual_verification_counter = 0
 
 def draw(screen:pygame.Surface):
     for button in buttons:
         assert type(button) == interface.Button
         screen.blit(button.get_surface(), button.get_position())
     screen.blit(whiteboard.get_surface(), whiteboard.get_position())
+
+    graph.draw()
+    screen.blit(graph.surface, graph.position)
+
+
 
 
     pygame.display.update()
@@ -146,17 +238,26 @@ def create_UI(screen:pygame.Surface):   #called in init to make all the menu obj
     whiteboard.set_size(wb_size)
     whiteboard.set_position(wb_pos)
 
-    #Training button
-    button_size = (200,100)
-    button_pos = (settings.CENTRE[0] - button_size[0]/2, settings.HEIGHT - button_size[1])
-    train_button = interface.Button(button_pos, button_size, None, "TRAIN")
-    buttons.append(train_button)
+    # #Training button
+    # button_size = (200,100)
+    # button_pos = (settings.CENTRE[0] - button_size[0]/2, settings.HEIGHT - button_size[1])
+    # train_button = interface.Button(button_pos, button_size, None, "TRAIN")
+    # buttons.append(train_button)
 
-    #Assess button
+    #Predict button
     button_size = (200,100)
     button_pos = (settings.CENTRE[0] - button_size[0]/2, settings.HEIGHT - button_size[1]*2 - 10)
-    assess_button = interface.Button(button_pos, button_size, None, "ASSESS")
+    assess_button = interface.Button(button_pos, button_size, None, "PREDICT")
     buttons.append(assess_button)
+
+def train_ai():
+    e = 0
+    if e < EPOCH_MAX:
+        global epochs
+        net.train(inputs, outputs, 1)
+        e += 1
+        epochs += 1
+    print("EPOCH " + str(epochs) + " TRAINED...")
 
 #------------------------------------------------------------------------------
 #####################

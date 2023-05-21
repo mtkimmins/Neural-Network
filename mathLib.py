@@ -513,6 +513,15 @@ class Matrix:
         matrix_obj.matrix = new_matrix
         return matrix_obj
 
+    @staticmethod
+    def flatten_to_list(matrix) -> list:
+        assert type(matrix) == Matrix, "not a matrix object"
+        c_matrix = Matrix.copy(matrix)
+        data = []
+        for row in range(c_matrix.rows):
+            data += c_matrix.matrix[row]
+        return data
+
     #####################
     #   COST FUNCTIONS  #
     #####################
@@ -520,9 +529,14 @@ class Matrix:
     def sum_of_squared_diff_cost(output_vector, target_vector) -> float:
         assert type(output_vector) == Matrix, "ERROR: output vector is not a matrix"
         assert type(target_vector) == Matrix, "ERROR: target vector is not in matrix form"
+        # print(output_vector.matrix)
+        # print(target_vector.matrix)
 
         cost = 0.0
         vec_diff = Matrix.subtract_matrix(output_vector, target_vector)
+        # print("VEC")
+        # print(vec_diff.matrix)
+        
         for row in range(vec_diff.rows):
             value = vec_diff.matrix[row][0] * vec_diff.matrix[row][0]
             cost += value

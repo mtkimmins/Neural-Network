@@ -87,9 +87,10 @@ class Button:
         return self.pressed
 
     #-------EXTERNALS-------------------
-    def is_event_clicked(self, event_pos):
+    def is_clicked(self, event_pos) -> bool:
         if (self.position[0] + self.size[0]) > event_pos[0] > self.position[0] and (self.position[1] + self.size[1] > event_pos[1] > self.position[1]):
-            pass
+            return True
+        return False
 
 
 #############
@@ -135,15 +136,20 @@ class Canvas:
         self.background_color = (0,0,0) #black default
         self.drawing_radius = 0
         self.drawing = False
+        self.disabled = True
 
     def draw(self, draw_position:tuple):
-        #use the x coord provided
-        # if self.is_hovered(draw_position):
-        for i in range(-self.drawing_radius, self.drawing_radius + 1):
-            for j in range(-self.drawing_radius, self.drawing_radius + 1):
-                self.surface.set_at((math.floor(draw_position[0] - self.position[0]) + i, math.floor(draw_position[1] - self.position[1]) + j), self.draw_color)
+        if self.drawing:
+            #use the x coord provided
+            # if self.is_hovered(draw_position):
+            for i in range(-self.drawing_radius, self.drawing_radius + 1):
+                for j in range(-self.drawing_radius, self.drawing_radius + 1):
+                    self.surface.set_at((math.floor(draw_position[0] - self.position[0]) + i, math.floor(draw_position[1] - self.position[1]) + j), self.draw_color)
 
     #----------------SETTERS-------------------------
+    def clear(self):
+        self.surface = pygame.Surface(self.size)
+    
     def set_draw_color(self, new_value:tuple):
         self.draw_color = new_value
 
@@ -159,6 +165,7 @@ class Canvas:
         self.position = new_position
     
     def set_drawing(self, new_value:bool):
+        if self.disabled: return
         self.drawing = new_value
     
     #------------------GETTERS---------------------
@@ -172,7 +179,48 @@ class Canvas:
         if (self.position[0] + self.size[0]) > mouse_position[0] > self.position[0] and (self.position[1] + self.size[1] > mouse_position[1] > self.position[1]):
             return True
         return False
+    
+    def get_surface_as_list(self) -> list:
+        surface_value_list = []
+        for i in range(self.surface.get_width()):
+            for j in range(self.surface.get_height()):
+                surface_value_list.append(self.surface.get_at((i,j))[0])
+        return surface_value_list
+
 
     #---------------EXTERNALS-------------------
-    
 
+
+#############
+#   GRAPH   #
+#############
+class Graph:
+    def __init__(self, size, position):
+        self.size = size
+        self.position = position
+        self.background_color = (0,0,0)
+        self.draw_color = (255,255,255)
+        self.axis_color = (175,175,175)
+        self.points = []
+        self.x_max = 100
+        self.y_max = 100
+        self.surface = pygame.Surface(self.size)
+        self.edge_margin = 5
+        self.origin = (self.edge_margin, self.size[1] - self.edge_margin)
+
+    def draw(self):
+        #draw the axes
+        x_axis = pygame.draw.line(self.surface, self.axis_color, self.origin, (self.size[0] - self.edge_margin, self.origin[1]))
+        y_axis = pygame.draw.line(self.surface, self.axis_color, (self.edge_margin, self.edge_margin), self.origin)
+        
+        #plot points
+        for i in self.points:
+            assert type(i) == tuple, "point not a tuple"
+            if self.y_max << int(i[1]):
+                self.y_max = max(round(i[1]),100)
+            pos = (self.origin[0] + i[0], self.origin[1] + (self.size[1] - self.edge_margin*2)*(i[1]/self.y_max))
+            pygame.draw.circle(self.surface, self.draw_color, pos, 1)
+
+    def add_point(self, new_coord:tuple):
+        self.points.append(new_coord)
+        self.draw()
