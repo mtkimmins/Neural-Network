@@ -2,6 +2,7 @@
 
 import math
 import pygame
+import NeuralNetwork as nn
 
 #TODO
 #-when click elsewhere than buttons, all buttons are disabled
@@ -224,3 +225,47 @@ class Graph:
     def add_point(self, new_coord:tuple):
         self.points.append(new_coord)
         self.draw()
+
+
+#########################################
+#   RENDERER FOR NETWORK THRU PYGAME    #
+#########################################
+
+class NetworkRender:
+    #TODO
+    #1)create all the nodes
+    #2)connect all the nodes
+    #3)draw onto surface
+    def __init__(self, network:nn.Network):
+        self.network = network
+
+        self.v_gap = 10
+        self.h_gap = 20
+        self.node_size = pygame.Rect(0,0,10,10)
+        self.surface_size = self.calculate_surface_size()
+        
+        self.surface = pygame.Surface(self.surface_size)
+        self.surface.set_colorkey((255,255,255))
+        self.create_nodes()
+
+
+    def get_surface(self)->pygame.Surface:
+        return self.surface
+
+    def create_nodes(self):
+        pass
+        #for each layer
+        for i in range(len(self.network.layer_list)):
+            #for each node in each layer
+            for j in range(self.network.layer_list[i]):
+                node = Node(round(self.network.matrices[i*3].matrix[j][0]), self.node_size)
+                coords = (i*(self.node_size.width + self.h_gap),
+                          j*(self.node_size.height + self.v_gap))
+                self.surface.blit(node.surface, coords)
+
+    def calculate_surface_size(self)->tuple:
+        width = (self.network.layers * self.node_size.width) + (self.network.layers - 1) * self.h_gap
+        widest_layer = max(self.network.layer_list)
+        height = (widest_layer * self.node_size.height) + (widest_layer - 1) * self.v_gap
+        return (width, height)
+

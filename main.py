@@ -1,6 +1,6 @@
 #REFERENCES
-import networkParts as nwp
-import mathLib as ml
+import NeuralNetwork as nn
+import MatrixMath as ml
 import pygame
 import settings
 import interface
@@ -64,7 +64,7 @@ for i in range(len(answers)):
 
 
 #NETWORK STUFF
-net = nwp.Network([28**2, 16, 16, 10], ml.Sigmoid, 0.1)
+net = nn.Network([28**2, 16, 16, 10], ml.Sigmoid, 0.01)
 
 #-----------------FUNCTIONS-------------------------
 #####################

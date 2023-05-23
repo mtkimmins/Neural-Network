@@ -1,27 +1,21 @@
 #TODO 
 
-
-import mathLib as ml
+#LIBRARIES
+import MatrixMath as ml
 import math
 import random
-import pygame
-import interface
-
 
 #####################
 #   NETWORK CORE    #
 #####################
-
 class Network:
-    def __init__(self, layers:list, activation_function, learning_rate:float):
+    def __init__(self, layers:list):
         #save setup settings
         self.layers = len(layers)
         self.layer_list = layers
-        self.matrices = []
-        self.matrices = self.get_new_matrices()
-        assert type(activation_function) == ml.ActivationFunction, "ERROR: activation function must be a mathLib ActivationFunction object"
-        self.activation_function = activation_function
-        self.learning_rate = learning_rate
+        self.matrices = self.init_structure()
+        self.activation_function = ml.Sigmoid
+        self.learning_rate = 0.1
         self.error_list = []
         self.verified = False
 
@@ -36,7 +30,7 @@ class Network:
                 #bias vector
                 self.matrices[i].randomize(0, 1)
 
-    def get_new_matrices(self) -> list:
+    def init_structure(self) -> list:
         new_matrices = []
         # complete library of matrices        
         #[0]    [0,0,0,0]     [0]      |     [0]     [0,0,0]         [0]       |      [0]
@@ -64,7 +58,7 @@ class Network:
                 new_matrices.append(bm)
         return new_matrices
 
-    def feedforward(self, input_data):
+    def feedforward(self, input_data:list):
         assert len(input_data) == self.layer_list[0], "ERROR: input data is not in compatible format for input vector"
         
         #set the input data as first layer
@@ -89,7 +83,7 @@ class Network:
             #squish result with an activation function
             self.matrices[next_layer_index].apply_function(self.activation_function.function)
                 
-    def backpropagate(self, target_data):
+    def backpropagate(self, target_data:list):
         #flip the matrices to go backward
         self.matrices.reverse()
 
@@ -296,46 +290,3 @@ class Network:
     def reset_all(self):
         self.reset_error_vecs()
         self.reset_layer_vecs()
-
-
-#########################################
-#   RENDERER FOR NETWORK THRU PYGAME    #
-#########################################
-
-class NetworkRender:
-    #TODO
-    #1)create all the nodes
-    #2)connect all the nodes
-    #3)draw onto surface
-    def __init__(self, network:Network):
-        self.network = network
-
-        self.v_gap = 10
-        self.h_gap = 20
-        self.node_size = pygame.Rect(0,0,10,10)
-        self.surface_size = self.calculate_surface_size()
-        
-        self.surface = pygame.Surface(self.surface_size)
-        self.surface.set_colorkey((255,255,255))
-        self.create_nodes()
-
-
-    def get_surface(self)->pygame.Surface:
-        return self.surface
-
-    def create_nodes(self):
-        pass
-        #for each layer
-        for i in range(len(self.network.layer_list)):
-            #for each node in each layer
-            for j in range(self.network.layer_list[i]):
-                node = interface.Node(round(self.network.matrices[i*3].matrix[j][0]), self.node_size)
-                coords = (i*(self.node_size.width + self.h_gap),
-                          j*(self.node_size.height + self.v_gap))
-                self.surface.blit(node.surface, coords)
-
-    def calculate_surface_size(self)->tuple:
-        width = (self.network.layers * self.node_size.width) + (self.network.layers - 1) * self.h_gap
-        widest_layer = max(self.network.layer_list)
-        height = (widest_layer * self.node_size.height) + (widest_layer - 1) * self.v_gap
-        return (width, height)
