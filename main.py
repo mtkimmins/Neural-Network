@@ -1,6 +1,6 @@
 #REFERENCES
 import NeuralNetwork as nn
-import MatrixMath as ml
+import MatrixMath as mx
 import pygame
 import settings
 import interface
@@ -49,13 +49,13 @@ int_to_list = {
 }
 #inputs
 for i in range(inputs_np.shape[0]):
-    i_matrix = ml.Matrix.from_list(inputs_np[i].tolist())
+    i_matrix = mx.Matrix.from_list(inputs_np[i].tolist())
     inputs.append(i_matrix)
 #outputs
 answers = outputs_np.tolist()
 for i in range(len(answers)):
     out = int_to_list[answers[i]]
-    o_matrix = ml.Matrix.from_list(out)
+    o_matrix = mx.Matrix.from_list(out)
     # print(o_matrix.matrix)
     outputs.append(o_matrix)
 
@@ -64,7 +64,7 @@ for i in range(len(answers)):
 
 
 #NETWORK STUFF
-net = nn.Network([28**2, 16, 16, 10], ml.Sigmoid, 0.01)
+net = nn.Network([28**2, 16, 16, 10])
 
 #-----------------FUNCTIONS-------------------------
 #####################

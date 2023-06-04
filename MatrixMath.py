@@ -33,11 +33,9 @@ TanH = ActivationFunction(
     lambda x: x + 1
 )
 
-###############
-#   CLASSES   #
-###############
-
-
+##############
+#   MATRIX   #
+##############
 class Matrix:
     def __init__(self, rows:int, columns:int):
         self.rows = rows
@@ -513,6 +511,8 @@ class Matrix:
         matrix_obj.matrix = new_matrix
         return matrix_obj
 
+
+    #TODO--make flatten (just to a long matrix, specify col or row vector)
     @staticmethod
     def flatten_to_list(matrix) -> list:
         assert type(matrix) == Matrix, "not a matrix object"
@@ -598,6 +598,7 @@ class Matrix:
                 if type(array[y][x]) is list: return False
         return True
 
+    #TODO--is this necessary?
     @staticmethod
     def can_vector(array:list) -> bool:
         for i in array:
