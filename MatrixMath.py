@@ -181,7 +181,7 @@ class Matrix:
     @staticmethod
     def from_list(input:list, is_vector_row:bool=True):
         #check type
-        assert type(input) == list, "ERROR: Invalid input, not a list"
+        # assert type(input) == list, "ERROR: Invalid input, not a list"
 
         #initial setup
         new_rows = 0
@@ -510,6 +510,27 @@ class Matrix:
         matrix_obj = Matrix(matrix.rows, matrix.columns)
         matrix_obj.matrix = new_matrix
         return matrix_obj
+
+    @staticmethod
+    def get_vector_max_index(matrix) -> int:
+        assert type(matrix) == Matrix, "input is not a matrix object"
+        index = 0
+        max_value = 0
+
+        #format matrix for search
+        if matrix.rows == 1 and matrix.columns > 1:
+            pass
+        elif matrix.columns == 1 and matrix.rows > 1:
+            matrix = Matrix.transpose_matrix(matrix)
+        else:
+            raise Exception("matrix is not a vector, but multidimensional")
+        
+        #run the search
+        for i in range(matrix.columns):
+            if matrix.matrix[0][i] > max_value:
+                index = i
+                max_value = matrix.matrix[0][i]
+        return index
 
 
     #TODO--make flatten (just to a long matrix, specify col or row vector)

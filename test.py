@@ -1,6 +1,10 @@
-import NeuralNetwork as nn
+import random
 
 
-net = nn.Network([2,2,2])
 
-print(net.save_exists())
+x = [1,2,3,4]
+y = [5,6,7,8]
+z = (x, y)
+for a,b in z:
+    print(a)
+    print(b)

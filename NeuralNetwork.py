@@ -17,6 +17,8 @@
 
 #LIBRARIES
 import MatrixMath as mx
+import random
+import math
 
 #####################
 #   NETWORK CORE    #
@@ -66,23 +68,23 @@ class Network:
             assert type(matrix) == mx.Matrix, "item is not a matrix in self.biases"
             matrix.randomize(-1, 1)
 
-    #-------------CORE FUNCTIONS------------
+#-------------CORE FUNCTIONS------------
     def feedforward(self, input:mx.Matrix) -> mx.Matrix:
         #"layer" is the main matrix object that will be manipulated, 
         # and its states will be saved as appended, copied matrix objects
-        layer = input.copy()
-        self.pre_activations.append(input.copy())
+        layer = mx.Matrix.copy(input)
+        self.pre_activations.append(mx.Matrix.copy(input))
         for n in range(self.numb_layers - 1):
             #multiply by the weights
             layer = mx.Matrix.multiply_matrix(self.weights[n], layer)
             #add the biases
             layer.add(self.biases[n])
             #save a copy of the layer to pre-activations
-            self.pre_activations.append(layer.copy())
+            self.pre_activations.append(mx.Matrix.copy(layer))
             #squish w activation function
             layer.apply_function(self.activation_function.function)
             #save the result in activation list
-            self.activations.append(layer.copy()) #activations list is 1 ahead of pre-activations
+            self.activations.append(mx.Matrix.copy(layer)) #activations list is 1 ahead of pre-activations
         return layer
     
     def backpropagate(self, target_data:mx.Matrix) -> tuple:
@@ -130,46 +132,126 @@ class Network:
             #return as a tuple
             return (delta_weights, delta_biases)
 
-    def adjust_network(self, batch_data:list):
-        #FIXME make the errors accumulate before subtracting them
-        #batch_data is a list of tuples (input, answer)
-        for input, answer in batch_data:
-            self.feedforward(input)
-            dw, db = self.backpropagate(answer)
-            #this is still stochastic *****FIX
-            for w,b in self.weights, self.biases:
-                w:mx.Matrix.subtract(dw)
-                b:mx.Matrix.subtract(db)
+    def adjust_network(self, delta_weights, delta_biases):
+        for i in range(len(delta_weights)): #both deltas should always be the same length
+            self.weights[i] = mx.Matrix.add_matrix(self.weights[i], delta_weights[i])
+            self.biases[i] = mx.Matrix.add_matrix(self.biases[i], delta_biases[i])
+
+    def train(self, data_set:list):
+        #set is a list of 2 lists of matrices: (inputs, answers)
+        #whole set of training pairs
+        input_data, label_data = data_set
+        for i in range(len(input_data)):
+            _output = self.feedforward(input_data[i])
+            delta_weight, delta_bias = self.backpropagate(label_data[i])
+            #stochastic gradient descent (immediate)
+            self.adjust_network(delta_weight, delta_bias)
     
-    def train():
-        #this is the training function - complex
-        pass
-
-    def assess():
-        #this is the guess with untested input
-        pass
-
-    def divide_data():
-        #prepare the data in a way for the network to train on it
-        pass
-
+    def test(self, data_set:list) -> bool:
+        #set is a list of 2 lists of matrices: (input, answer)
+        #whole set of test pairs
+        input_data, label_data = data
+        for i in range(len(input_data)):
+            output = self.feedforward(input_data[i])
+            if output == label_data[i]:
+                return True
+            else:
+                delta_weight, delta_bias = self.backpropagate(label_data[i])
+                #stochastic gradient descent (immediate)
+                self.adjust_network(delta_weight, delta_bias)
+        return False
+ 
 
 #####################
 #   SAVING NETWORK  #
 #####################
-    def save(self):
-        pass
+#STRUCTURE OF SAVE DOCUMENT:
+#REPEAT FOLLOWING FOR EACH MATRIX TYPE >>>
+#first line = type of matrix (weight, bias)
+#second line = number of matrices
+#   REPEAT FOLLOWING FOR EACH MATRIX >>>
+#   first line = number of rows in the matrix 
+#       (use to read the next x number of lines in the file)
+#   x lines = row of matrix data
 
-    def save_exists(self):
+    def save(self):
+        file = open(self.save_dir, "wt")
+        #WEIGHT MATRICES
+        #write type and number of matrices for reading
+        file.writelines([str(len(self.weights)), "\n"])
+        for wt in self.weights:
+            #specify datatype
+            wt:mx.Matrix
+            #write the number of rows to use for reading
+            file.writelines([str(wt.rows), "\n"])
+            #write each row of data in a new line
+            for row in range(wt.rows):
+                file.writelines([str(wt.matrix[row]), "\n"])
+
+        #BIAS MATRICES
+        #write type and number of matrices for reading
+        file.writelines([str(len(self.biases)), "\n"])
+        for b in self.biases:
+            #specify datatype
+            b:mx.Matrix
+            #write the number of rows to use for reading
+            file.writelines([str(b.rows), "\n"])
+            #write each row of data in a new line
+            for row in range(b.rows):
+                file.writelines([str(b.matrix[row]), "\n"])
+        file.close()
+
+    def save_exists(self) -> bool:
         try:
             f = open(self.save_dir)
         except:
             return False
         return True
     
-    def load(self):
-        assert self.save_exists(), "save data does not exist yet, save data before reading"
+    def load(self) -> tuple:
+        #what will be returned at the end
+        weights = []
+        biases = []
 
+        file = open(self.save_dir, "rt")
+        lines:list = file.readlines()
+        numb_matrices = int(lines[0])
+
+        line_index = 1
+        #WEIGHTS
+        for i in range(numb_matrices):
+            #get rows
+            rows = int(lines[line_index])
+            line_index += 1
+            matrix = []
+            #for each row, append data
+            for row in range(rows):
+                matrix.append(lines[line_index])
+                line_index += 1
+            #make the matrix data into a matrix, and append
+            weights.append(mx.Matrix.from_list(matrix))
+        
+        #BIASES
+        numb_matrices = int(lines[line_index])
+        line_index += 1
+        for i in range(numb_matrices):
+            #get rows
+            rows = int(lines[line_index])
+            line_index += 1
+            matrix = []
+            #for each row, append data
+            for row in range(rows):
+                matrix.append(lines[line_index])
+                line_index += 1
+            #make the matrix data into a matrix, and append
+            biases.append(mx.Matrix.from_list(matrix))
+        file.close()
+        return (weights, biases)
+    
+    def clear_save(self):
+        file = open(self.save_dir, "wt")
+        file.write("")
+        file.close()
 
 
 ###############
