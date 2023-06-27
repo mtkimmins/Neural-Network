@@ -2,8 +2,6 @@
 
 #------------IMPORTS-----------------
 import numpy as np
-import math
-import random
 
 
 #-------------CLASSES-----------------
@@ -14,37 +12,37 @@ class Network:
     def __init__(self, layers:list):
         self.numb_layers = len(layers)
         self.layers = layers
+        self.cost = 0.0
 
         self.activation_function = Sigmoid
-        self.learning_rate = 0.1
+        self.learning_rate = 3
 
-
-        self.pre_activations = [] #these are row vectors
         self.activations = [] #these are row vectors
+        self.pre_activations = []
         self.weights = [] #multidimensional matrix
         self.biases = [] #these are row vectors
 
         for layer in layers:
-            self.pre_activations.append(np.zeros(shape = (layer,1)))
             self.activations.append(np.zeros(shape = (layer,1)))
 
-        rng = np.random.default_rng()
+        # rng = np.random.default_rng()
         for i in range(self.numb_layers-1):
-            self.weights.append(rng.uniform(0,1, size=(self.layers[i+1], self.layers[i])))
-            self.biases.append(rng.uniform(0,1, size=(self.layers[i+1],1)))
+            self.weights.append(np.ones((self.layers[i+1], self.layers[i])))
+            self.biases.append(np.ones((self.layers[i+1],1)))
+            # self.weights.append(rng.uniform(0,1, size=(self.layers[i+1], self.layers[i])))
+            # self.biases.append(rng.uniform(0,1, size=(self.layers[i+1],1)))
     
     def feedforward(self, data:np.ndarray):
-        r_data = np.reshape(data, (784,1))
+        data = data.reshape((784,1))
         #check that the array is the same size as the input layer
         #assign the array as the input layer
         #prop forward until you get an output
         #make branchoff matrices and store them in the appropriate place (PRE-ACTIVATIONS or ACTIVATIONS)
-        if not self.can_insert_data(r_data, self.activations[0]): 
-            raise Exception("Incompatible sizes: {0} = data shape, {1} = input layer shape".format(r_data.shape, self.activations[0].shape))
+        if not self.can_insert_data(data, self.activations[0]): 
+            raise Exception("Incompatible sizes: {0} = data shape, {1} = input layer shape".format(data.shape, self.activations[0].shape))
         
-        layer:np.ndarray = r_data.copy()
-        self.activations[0] = r_data.copy()
-        self.pre_activations[0] = r_data.copy()
+        layer:np.ndarray = data.copy()
+        self.activations[0] = data.copy()
         propagations = self.numb_layers-1
 
         for i in range(propagations):
@@ -55,18 +53,19 @@ class Network:
             layer = self.weights[i] @ layer
             #add biases
             layer += self.biases[i]
+            
+            #save layer
+            self.pre_activations.append(layer)
 
-            #save pre-activation state
-            if self.can_insert_data(layer, self.pre_activations[f_vec_i]):
-                self.pre_activations[f_vec_i] = layer.copy()
-            np.apply_over_axes(self.activation_function.function, layer, [0,layer.shape[0]])
-            if self.can_insert_data(layer, self.activations[f_vec_i]):
-                self.activations[f_vec_i] = layer.copy()
+            # if self.can_insert_data(layer, self.pre_activations[f_vec_i]):
+            layer = self.activation_function.function(layer)
+            # if self.can_insert_data(layer, self.activations[f_vec_i]):
+            self.activations[f_vec_i] = layer.copy()
 
     def backpropagate(self, label:np.ndarray) -> tuple:
-        r_label = np.reshape(label, (10,1))
-        if not r_label.shape == self.activations[-1].shape: 
-            raise Exception("Incompatible sizes: {0} = label; {1} = output".format(r_label.shape, self.activations[-1].shape))
+        label = np.reshape(label, (10,1))
+        if not label.shape == self.activations[-1].shape: 
+            raise Exception("Incompatible sizes: {0} = label; {1} = output".format(label.shape, self.activations[-1].shape))
         #get the error of the last vec
         #get the error of the previous vec
         #get the gradient, save as d_Bias
@@ -76,7 +75,10 @@ class Network:
         errors = []
         delta_weights = []
         delta_biases = []
-        error = self.activations[-1] - r_label
+        error = np.subtract(self.activations[-1], label)
+        self.cost = 0.0
+        for i in range(error.shape[0]):
+            self.cost += error[i]**2
         errors.append(error)
         
         #get all error vecs first
@@ -87,39 +89,57 @@ class Network:
             
         for i in range(len(self.weights)-1, -1, -1):
             #get the deltas
-            derivative = np.apply_over_axes(self.activation_function.derivative, self.activations[i+1].copy(), [0,self.activations[i+1].shape[0]])
-            gradient = derivative * error[i+1].T * self.learning_rate
+            derivative = self.activation_function.derivative(self.activations[i+1])
+            gradient = derivative * errors[i+1] * self.learning_rate
             delta_biases.append(gradient.copy())
-            delta_weights.append(gradient @ self.activations[i].copy().T)
+            dw = gradient @ self.activations[i].copy().T
+            delta_weights.append(dw)
         
         delta_weights.reverse()
         delta_biases.reverse()
-        return (delta_weights, delta_biases)
+        return (delta_weights, delta_biases, errors)
 
-    def train(self, training_data:tuple, test_data:tuple, epochs):
+    def train(self, epochs:int, training_data:tuple, test_data:tuple = None):
         input_data, label_data = training_data
-        t_input_data, t_label_data = test_data
+        if test_data != None:
+            t_input_data, t_label_data = test_data
         
         e = 0
         while e < epochs:
             e += 1
             i = 0
-            while i < len(input_data)-1:
+            while i < (input_data.shape[0]-1):
                 self.feedforward(input_data[i])
                 bp = self.backpropagate(label_data[i])
+                self.clear_layer_values()
                 self.adjust(bp)
                 i += 1
-            j = 0
-            correct = 0
-            while j < len(t_input_data)-1:
-                self.feedforward(t_input_data[j])
-                r_label = np.reshape(t_label_data[j], (10,1))
-                out = np.argmax(self.activations[-1])
-                answer = np.argmax(r_label)
-                if out == answer:
-                    correct += 1
-                j += 1
-            print("EPOCH {0}: {1} / {2} correct.".format(e, correct, len(t_input_data)))
+            if test_data != None:
+                j = 0
+                correct = 0
+                while j < (t_input_data.shape[0]-1):
+                    self.feedforward(t_input_data[j])
+                    out = np.argmax(self.activations[-1])
+                    answer = np.argmax(t_label_data[j])
+                    if out == answer:
+                        correct += 1
+                    j += 1
+                print("EPOCH {0}: {1} / {2} correct.".format(e, correct, len(t_input_data)))
+            else:
+                print("EPOCH {0} complete, no test".format(e))
+
+    def test(self, test_data:tuple):
+        t_input_data, t_label_data = test_data
+        j = 0
+        correct = 0
+        while j < (t_input_data.shape[0]-1):
+            self.feedforward(t_input_data[j])
+            out = np.argmax(self.activations[-1])
+            answer = np.argmax(t_label_data[j])
+            if out == answer:
+                correct += 1
+            j += 1
+        print("TEST: {0} / {1} correct.".format(correct, len(t_input_data)))
 
 
     def can_insert_data(self, new_data:np.ndarray, existing_matrix:np.ndarray) -> bool:
@@ -128,16 +148,36 @@ class Network:
         return False 
     
     def adjust(self, deltas:tuple):
-        dw,db = deltas
+        dw,db,_e = deltas
+        #this tacks on to the back of the array, not change it
         for i in range(len(self.weights)):
-            self.weights[i] = self.weights[i] + dw[i]
+            self.weights[i] = np.subtract(self.weights[i], dw[i])
         for i in range(len(self.biases)):
-            self.biases[i] = self.biases[i] + db[i]
+            self.biases[i] = np.subtract(self.biases[i], db[i])
+        # print("DELTA WEIGHTS: ")
+        # print(dw)
+        # print("\n")
+        # print("DELTA BIASES: ")
+        # print(db)
+
+    def clear_layer_values(self):
+        self.activations = []
+        for layer in self.layers:
+            self.activations.append(np.zeros(shape = (layer,1)))
 
 
-
-
-
+    def save(self):
+        file = open("data.npy", "wt")
+        for n in self.weights:
+            np.save(file, n)
+        for n in self.biases:
+            np.save(file, n)
+    
+    def load(self):
+        file = open("data.npy", "rt")
+        w,b = np.load(file)
+        print(w)
+        print(b)
 
 
 #############################
@@ -150,7 +190,7 @@ class ActivationFunction:
         
 #sqiggle between 0 and 1
 Sigmoid = ActivationFunction(
-    lambda x,_axis: 1/(1+ np.e**(x)),
-    lambda y,_axis: y * (1-y)
+    lambda x: 1/(1 + np.e**(-x)) if x.any() > -10 else x*0,
+    lambda y: y * (1-y)
 )
 

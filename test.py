@@ -1,23 +1,59 @@
 import numpy as np
+import NeuralNetwork as nn
 
 
-a = np.array([0,0,0,1]).reshape((4,1))
-b = np.array([0,0,0,1]).reshape((4,1))
-c = np.array([0,1,0,0]).reshape((4,1))
+net = nn.Network([10,5,5,3])
+
+data = np.array([[2],[2],[2],[2],[2],[2],[2],[2],[2],[2]]).reshape((10,1))
+label = np.array([[0],[0],[0]]).reshape((3,1))
+
+'''''
+2,2,2,2,2,2,2,2,2,2
+
+(2*10+1),(2*10+1),(2*10+1),(2*10+1),(2*10+1)
+21,21,21,21,21
+1,1,1,1,1
+
+(1*5+1),(1*5+1),(1*5+1),(1*5+1),(1*5+1),
+6,6,6,6,6
+1,1,1,1,1
+
+(1*5+1),(1*5+1),(1*5+1)
+6,6,6
+1,1,1
+'''''
+net.feedforward(data)
+# for n in net.pre_activations:
+#     print(n)
+
+'''
+1,1,1
+
+(1*3),(1*3),(1*3),(1*3),(1*3)
+3,3,3,3,3
+
+(3*5),(3*5),(3*5),(3*5),(3*5),
+15,15,15,15,15
+========
+wt
+dx = y*(1-y)
+1,1,1
+
+0,0,0
 
 
 
-d = np.argmax(a)
-e = np.argmax(b)
-f = np.argmax(c)
+[][][][][]
+[][][][][]
+[][][][][]
 
-print(a==b)
-print(a==c)
-print(d)
-print(e)
-print(f)
-print(d.item())
-print(e.item())
-print(f.item())
-print(d.item()==e.item())
-print(d.item()==f.item())
+
+
+
+
+'''
+
+errors = net.backpropagate(label)
+dw,db,er = errors
+for n in db:
+    print(n)

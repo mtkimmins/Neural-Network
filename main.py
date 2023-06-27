@@ -1,34 +1,43 @@
 import NeuralNetwork as nn
 import numpy as np
+import tensorflow as tf
+import matplotlib.pyplot as pt
 
-X = np.load("data/new_img_array.npy")
-Y = np.load("data/new_y_true.npy")
 
+# X = np.load("data/new_img_array.npy")
+# Y = np.load("data/new_y_true.npy")
+
+(trainX, trainY), (testX, testY) = tf.keras.datasets.mnist.load_data()
 
 Ytoy = {
-    0: np.asarray([1,0,0,0,0,0,0,0,0,0]),
-    1: np.asarray([0,1,0,0,0,0,0,0,0,0]),
-    2: np.asarray([0,0,1,0,0,0,0,0,0,0]),
-    3: np.asarray([0,0,0,1,0,0,0,0,0,0]),
-    4: np.asarray([0,0,0,0,1,0,0,0,0,0]),
-    5: np.asarray([0,0,0,0,0,1,0,0,0,0]),
-    6: np.asarray([0,0,0,0,0,0,1,0,0,0]),
-    7: np.asarray([0,0,0,0,0,0,0,1,0,0]),
-    8: np.asarray([0,0,0,0,0,0,0,0,1,0]),
-    9: np.asarray([0,0,0,0,0,0,0,0,0,1]),
+    0: [1,0,0,0,0,0,0,0,0,0],
+    1: [0,1,0,0,0,0,0,0,0,0],
+    2: [0,0,1,0,0,0,0,0,0,0],
+    3: [0,0,0,1,0,0,0,0,0,0],
+    4: [0,0,0,0,1,0,0,0,0,0],
+    5: [0,0,0,0,0,1,0,0,0,0],
+    6: [0,0,0,0,0,0,1,0,0,0],
+    7: [0,0,0,0,0,0,0,1,0,0],
+    8: [0,0,0,0,0,0,0,0,1,0],
+    9: [0,0,0,0,0,0,0,0,0,1],
 }
 n_list = []
-for i in Y:
+n_list_t = []
+for i in trainY:
     n_list.append(Ytoy[i])
-y = np.asarray(n_list)
+for i in testY:
+    n_list_t.append(Ytoy[i])
+
+trainy1 = np.asarray(n_list)
+testy1 = np.asarray(n_list_t)
 
 
-division = int(np.floor(X.shape[0] * 0.8))
-x1,x2 = np.vsplit(X, [division])
-y1,y2 = np.vsplit(y, [division])
+# division = int(np.floor(X.shape[0] * 0.8))
+# x1,x2 = np.vsplit(X, [division])
+# y1,y2 = np.vsplit(y, [division])
 
 
-net = nn.Network([28*28,100,10])
+net = nn.Network([28*28,16,16,10])
 
 def print_net():
     print("PRE-ACTIVATIONS")
@@ -54,7 +63,36 @@ def print_net():
 # print_net()
 # net.backpropagate(y[0])
 
-net.train((x1,y1), (x2,y2), 1000)
+# net.train((x1,y1), (x2,y2), 1000)
+fig, ax = pt.subplots()
+costs = []
+a = 0
+while a < 1000000:
+    net.train(1, (trainX, trainy1))
+    costs.append(net.cost)
+    net.test((testX, testy1))
+    a += 1
+
+net.save()
+net.load()
+
+# ax.scatter(a, net.cost)
+ax.scatter(np.linspace(0,100,100),np.array(costs))
+ax.set(xlim=(0,11), xticks=np.arange(1,11),
+        ylim=(0,11), yticks=np.arange(1,11))
+pt.show()
+# net1 = nn.Network([2,2,1])
+
+# A = np.array([[0,1],
+#               [0,0],
+#               [1,0],
+#               [1,1]]).reshape((4,2,1))
+
+# B = np.array([[1],[0],[1],[1]]).reshape((4,1,1))
+
+# net1.train((A,B),(A,B), 1000)
+
+
 
 
 
