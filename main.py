@@ -4,9 +4,6 @@ import tensorflow as tf
 import matplotlib.pyplot as pt
 
 
-# X = np.load("data/new_img_array.npy")
-# Y = np.load("data/new_y_true.npy")
-
 (trainX, trainY), (testX, testY) = tf.keras.datasets.mnist.load_data()
 
 Ytoy = {
@@ -32,15 +29,11 @@ trainy1 = np.asarray(n_list)
 testy1 = np.asarray(n_list_t)
 
 
-# division = int(np.floor(X.shape[0] * 0.8))
-# x1,x2 = np.vsplit(X, [division])
-# y1,y2 = np.vsplit(y, [division])
-
-
 net = nn.Network([28*28,16,16,10])
 
 def print_net():
     print("PRE-ACTIVATIONS")
+    
     for i in net.pre_activations:
         print(i)
         print("shape = " + str(i.shape))
@@ -57,40 +50,14 @@ def print_net():
         print(i)
         print("shape = " + str(i.shape))
 
+i = 0
+while i < 200:
+    print("EPOCH: " + str(i))
+    net.load()
+    net.train(1, (trainX, trainy1),(testX, testy1))
+    net.save()
+    i += 1
 
-# print_net()
-# net.feedforward(X[0].flatten())
-# print_net()
-# net.backpropagate(y[0])
-
-# net.train((x1,y1), (x2,y2), 1000)
-fig, ax = pt.subplots()
-costs = []
-a = 0
-while a < 1000000:
-    net.train(1, (trainX, trainy1))
-    costs.append(net.cost)
-    net.test((testX, testy1))
-    a += 1
-
-net.save()
-net.load()
-
-# ax.scatter(a, net.cost)
-ax.scatter(np.linspace(0,100,100),np.array(costs))
-ax.set(xlim=(0,11), xticks=np.arange(1,11),
-        ylim=(0,11), yticks=np.arange(1,11))
-pt.show()
-# net1 = nn.Network([2,2,1])
-
-# A = np.array([[0,1],
-#               [0,0],
-#               [1,0],
-#               [1,1]]).reshape((4,2,1))
-
-# B = np.array([[1],[0],[1],[1]]).reshape((4,1,1))
-
-# net1.train((A,B),(A,B), 1000)
 
 
 

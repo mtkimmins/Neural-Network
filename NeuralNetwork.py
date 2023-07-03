@@ -1,36 +1,45 @@
-#TODO refactor all this shit
+#TODO
+
 
 #------------IMPORTS-----------------
 import numpy as np
+
+
+#-------------GENERAL VARS-----------
+DIRECTORY = "data_directory.txt"
+WEIGHT_FILE = "weights"
+BIAS_FILE = "biases"
 
 
 #-------------CLASSES-----------------
 #####################
 #   NEURAL NETWORK  #
 #####################
+
 class Network:
     def __init__(self, layers:list):
         self.numb_layers = len(layers)
         self.layers = layers
         self.cost = 0.0
+        self.epochs = 0
 
         self.activation_function = Sigmoid
-        self.learning_rate = 3
+        self.learning_rate = 0.1
 
         self.activations = [] #these are row vectors
         self.pre_activations = []
-        self.weights = [] #multidimensional matrix
+        self.weights = [] #multidimensional matrix+
         self.biases = [] #these are row vectors
 
         for layer in layers:
             self.activations.append(np.zeros(shape = (layer,1)))
 
-        # rng = np.random.default_rng()
+        rng = np.random.default_rng()
         for i in range(self.numb_layers-1):
-            self.weights.append(np.ones((self.layers[i+1], self.layers[i])))
-            self.biases.append(np.ones((self.layers[i+1],1)))
-            # self.weights.append(rng.uniform(0,1, size=(self.layers[i+1], self.layers[i])))
-            # self.biases.append(rng.uniform(0,1, size=(self.layers[i+1],1)))
+            # self.weights.append(np.ones((self.layers[i+1], self.layers[i])))
+            # self.biases.append(np.ones((self.layers[i+1],1)))
+            self.weights.append(rng.uniform(-1,1, size=(self.layers[i+1], self.layers[i])))
+            self.biases.append(rng.uniform(-1,1, size=(self.layers[i+1],1)))
     
     def feedforward(self, data:np.ndarray):
         data = data.reshape((784,1))
@@ -100,6 +109,7 @@ class Network:
         return (delta_weights, delta_biases, errors)
 
     def train(self, epochs:int, training_data:tuple, test_data:tuple = None):
+        # self.load()
         input_data, label_data = training_data
         if test_data != None:
             t_input_data, t_label_data = test_data
@@ -107,6 +117,7 @@ class Network:
         e = 0
         while e < epochs:
             e += 1
+            self.epochs += 1
             i = 0
             while i < (input_data.shape[0]-1):
                 self.feedforward(input_data[i])
@@ -127,6 +138,8 @@ class Network:
                 print("EPOCH {0}: {1} / {2} correct.".format(e, correct, len(t_input_data)))
             else:
                 print("EPOCH {0} complete, no test".format(e))
+        else:
+            self.save()
 
     def test(self, test_data:tuple):
         t_input_data, t_label_data = test_data
@@ -167,17 +180,37 @@ class Network:
 
 
     def save(self):
-        file = open("data.npy", "wt")
-        for n in self.weights:
-            np.save(file, n)
-        for n in self.biases:
-            np.save(file, n)
+        file = open(DIRECTORY, "wt")
+        file.write(str(self.numb_layers) + "\n")
+        file.write(str(self.epochs))
+        
+
+        for i in range(len(self.weights)):
+            np.save(WEIGHT_FILE + "{0}".format(i) + ".npy", self.weights[i])
+        for i in range(len(self.biases)):
+            np.save(BIAS_FILE + "{0}".format(i) + ".npy", self.biases[i])        
+        
     
     def load(self):
-        file = open("data.npy", "rt")
-        w,b = np.load(file)
-        print(w)
-        print(b)
+        file = open(DIRECTORY, "rt")
+        n_layers = int(file.readline())
+        epochs = int(file.readline())
+        self.epochs = epochs
+        
+
+        loaded_wt_array = []
+        loaded_bs_array = []
+        for i in range(n_layers-1):
+            wt_data = np.load(WEIGHT_FILE + "{0}".format(i) + ".npy")
+            bs_data = np.load(BIAS_FILE + "{0}".format(i) + ".npy")
+            loaded_wt_array.append(wt_data)
+            loaded_bs_array.append(bs_data)
+        
+            # print(wt_data)
+            # print(bs_data)
+        self.weights = loaded_wt_array
+        self.biases = loaded_bs_array
+        
 
 
 #############################
